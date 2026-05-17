@@ -1,0 +1,21 @@
+# Environment files
+.env
+autoengage-main/.env
+
+# Python
+__pycache__/
+**/__pycache__/
+.venv/
+**/ .venv/
+
+# Node
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+
+# IDEs and OS
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
