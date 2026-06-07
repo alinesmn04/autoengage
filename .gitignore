@@ -1,6 +1,3 @@
-# Environment files
-.env
-autoengage-main/.env
 
 # Python
 __pycache__/
