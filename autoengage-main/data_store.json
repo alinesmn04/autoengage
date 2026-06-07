@@ -1,0 +1,71 @@
+{
+  "brand": {
+    "name": "TechFlow",
+    "niche": "AI automation for small businesses",
+    "tone": "Professional but friendly",
+    "target_audience": "Small business owners, freelancers, and entrepreneurs",
+    "unique_value": "We make AI simple and practical for everyday business tasks",
+    "forbidden_phrases": [
+      "buy now",
+      "limited time",
+      "guaranteed"
+    ],
+    "cta_default": "Comment GUIDE for our free automation guide",
+    "website": "https://techflow.example.com"
+  },
+  "leads": [],
+  "conversations": [],
+  "voice_samples": [],
+  "campaigns": [
+    {
+      "id": "camp_20742",
+      "name": "אוטומצית crm ברדיט",
+      "platform": "Reddit",
+      "query": "automation",
+      "subreddit": "solopreneur",
+      "status": "Active",
+      "posts_scanned": 4,
+      "comments_posted": 1,
+      "leads_captured": 0,
+      "logs": [
+        "[2026-06-07 03:21:19] 🏁 Campaign execution cycle finished.",
+        "[2026-06-07 03:21:19] ℹ️ Post relevance too low, skipping.",
+        "[2026-06-07 03:21:19] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
+        "[2026-06-07 03:21:19] ⚡ Scoring relevance for post...",
+        "[2026-06-07 03:21:19] 📖 Reading post content: 'Example post about automation' by Anonymous",
+        "[2026-06-07 03:21:19] 📋 Found 1 posts. Processing first relevant post...",
+        "[2026-06-07 03:21:19] 🔍 Searching for posts on Reddit with query: 'automation'",
+        "[2026-06-07 03:21:19] 🚀 Starting campaign execution cycle...",
+        "[2026-06-07 03:03:03] 🏁 Campaign execution cycle finished.",
+        "[2026-06-07 03:03:03] 🎉 Comment successfully published! Text: 'Great insights! Streamlining operations and automation can really help scale bus...'",
+        "[2026-06-07 03:03:03] 📤 Posting comment to reddit...",
+        "[2026-06-07 03:03:03] ✅ QA Score: 94/100. (AI Smell: 2/10, Length: 177 chars)",
+        "[2026-06-07 03:03:03] 🛡️ Performing QA checks on drafted comment...",
+        "[2026-06-07 03:03:03] ✍️ Drafting valuable comment...",
+        "[2026-06-07 03:03:03] 📊 Relevance score: 100/100 - 100/100\nExplanation: The post is highly relevant to the niche.",
+        "[2026-06-07 03:03:03] ⚡ Scoring relevance for post...",
+        "[2026-06-07 03:03:03] 📖 Reading post content: 'AI automation for agencies' by Anonymous",
+        "[2026-06-07 03:03:03] 📋 Found 1 posts. Processing first relevant post...",
+        "[2026-06-07 03:03:03] 🔍 Searching for posts on Reddit with query: 'automation'",
+        "[2026-06-07 03:03:03] 🚀 Starting campaign execution cycle...",
+        "[2026-06-07 03:02:24] 🏁 Campaign execution cycle finished.",
+        "[2026-06-07 03:02:24] ℹ️ Post relevance too low, skipping.",
+        "[2026-06-07 03:02:24] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
+        "[2026-06-07 03:02:24] ⚡ Scoring relevance for post...",
+        "[2026-06-07 03:02:24] 📖 Reading post content: 'Example post about automation' by Anonymous",
+        "[2026-06-07 03:02:24] 📋 Found 1 posts. Processing first relevant post...",
+        "[2026-06-07 03:02:24] 🔍 Searching for posts on Reddit with query: 'automation'",
+        "[2026-06-07 03:02:24] 🚀 Starting campaign execution cycle...",
+        "[2026-06-07 02:50:03] 🏁 Campaign execution cycle finished.",
+        "[2026-06-07 02:50:03] ℹ️ Post relevance too low, skipping.",
+        "[2026-06-07 02:50:03] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
+        "[2026-06-07 02:50:03] ⚡ Scoring relevance for post...",
+        "[2026-06-07 02:50:03] 📖 Reading post content: 'Example post about למשל: make CRM bottleneck or automate CRM' by Anonymous",
+        "[2026-06-07 02:50:03] 📋 Found 1 posts. Processing first relevant post...",
+        "[2026-06-07 02:50:03] 🔍 Searching for posts on Reddit with query: 'למשל: make CRM bottleneck or automate CRM'",
+        "[2026-06-07 02:50:03] 🚀 Starting campaign execution cycle...",
+        "[2026-06-07 00:15] 📌 Campaign created successfully."
+      ]
+    }
+  ]
+}

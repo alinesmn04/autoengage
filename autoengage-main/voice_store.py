@@ -5,8 +5,7 @@ This module stores and searches writing style samples.
 
 from langchain_core.tools import tool
 
-# Simple in-memory voice samples storage
-VOICE_SAMPLES = []
+from persistence import VOICE_SAMPLES, save_all
 
 
 @tool
@@ -21,6 +20,7 @@ def add_voice_sample(text: str, category: str) -> str:
     }
 
     VOICE_SAMPLES.append(sample)
+    save_all()
 
     return f"Voice sample saved successfully in category: {category}"
 

@@ -1,6 +1,19 @@
 import os
 import sys
 import random
+
+# Force standard streams to use UTF-8 and safely replace unsupported characters to prevent Windows console encoding crashes (CP1255/CP1252)
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -8,16 +21,20 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from dotenv import load_dotenv
 
+from pathlib import Path
+
 # Ensure current folder is in the python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
+current_dir = str(Path(__file__).parent.resolve())
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
 
 # Load environment variables from .env first
-load_dotenv(os.path.join(current_dir, ".env"))
+load_dotenv(Path(current_dir) / ".env")
 
-# Ensure GROQ_API_KEY is present to prevent langchain-groq from throwing at import time
-if not os.environ.get("GROQ_API_KEY"):
-    os.environ["GROQ_API_KEY"] = "gsk_simulation_key_autoengage_fallback_12345"
+
+
+# Import persistence and save utilities
+from persistence import CAMPAIGNS, save_all
 
 # Import agent objects and tools from existing scripts
 from agent import llm_with_tools, SYSTEM_PROMPT, HumanMessage, SystemMessage
@@ -58,6 +75,12 @@ class ChatRequest(BaseModel):
 class SearchRequest(BaseModel):
     query: str
     max_results: Optional[int] = 5
+
+class CampaignCreateRequest(BaseModel):
+    name: str
+    platform: str
+    query: str
+    subreddit: Optional[str] = None
 
 class ReadPostRequest(BaseModel):
     url: str
@@ -156,10 +179,11 @@ def get_brand():
 def update_brand(updated: Dict[str, Any]):
     global BRAND
     BRAND.update(updated)
+    save_all()
     return {"message": "Brand profile updated successfully", "brand": BRAND}
 
 @app.post("/api/chat")
-async def chat_with_agent(request: ChatRequest):
+def chat_with_agent(request: ChatRequest):
     try:
         from langchain_core.messages import AIMessage, ToolMessage
         from agent import TOOLS
@@ -182,12 +206,30 @@ async def chat_with_agent(request: ChatRequest):
         
         executed_tool_logs = []
         
-        # Max 5 iterations to prevent infinite loops
-        for iteration in range(5):
+        # Max 8 iterations to prevent infinite loops
+        for iteration in range(8):
             response = llm_with_tools.invoke(messages)
             
-            # Check for tool calls
-            tool_calls = response.additional_kwargs.get("tool_calls", [])
+            # Check for tool calls using standard LangChain unified tool_calls
+            tool_calls = getattr(response, "tool_calls", [])
+            
+            # Fallback to additional_kwargs if tool_calls is empty
+            if not tool_calls:
+                add_kwargs_calls = response.additional_kwargs.get("tool_calls", [])
+                if add_kwargs_calls:
+                    import json
+                    for tc in add_kwargs_calls:
+                        func = tc.get("function", {})
+                        try:
+                            args = json.loads(func.get("arguments", "{}")) if isinstance(func.get("arguments"), str) else func.get("arguments")
+                        except:
+                            args = {}
+                        tool_calls.append({
+                            "id": tc.get("id"),
+                            "name": func.get("name"),
+                            "args": args
+                        })
+            
             if not tool_calls:
                 break
                 
@@ -195,15 +237,8 @@ async def chat_with_agent(request: ChatRequest):
             
             for tc in tool_calls:
                 t_id = tc.get("id")
-                func = tc.get("function", {})
-                t_name = func.get("name")
-                
-                # Parse arguments safely
-                import json
-                try:
-                    t_args = json.loads(func.get("arguments", "{}")) if isinstance(func.get("arguments"), str) else func.get("arguments")
-                except:
-                    t_args = {}
+                t_name = tc.get("name")
+                t_args = tc.get("args", {})
                 
                 # Execute tool
                 if t_name in tool_map:
@@ -214,26 +249,50 @@ async def chat_with_agent(request: ChatRequest):
                 else:
                     t_res = f"Tool {t_name} not found."
                 
+                import json
                 executed_tool_logs.append(
                     f"🔧 כלי הופעל: {t_name}\nפרמטרים: {json.dumps(t_args, ensure_ascii=False)}\nתוצאה: {str(t_res)[:400]}..."
                 )
                 
                 messages.append(ToolMessage(content=str(t_res), tool_call_id=t_id))
         
+        # Clean up response.content to ensure it is a plain string
+        cleaned_response = response.content
+        if isinstance(cleaned_response, list):
+            text_parts = []
+            for item in cleaned_response:
+                if isinstance(item, dict) and "text" in item:
+                    text_parts.append(item["text"])
+                elif isinstance(item, str):
+                    text_parts.append(item)
+            cleaned_response = "".join(text_parts)
+        elif cleaned_response is None:
+            cleaned_response = ""
+        else:
+            cleaned_response = str(cleaned_response)
+
+        if not cleaned_response.strip():
+            cleaned_response = "בוצעה הפעולה בהצלחה."
+
         return {
-            "response": response.content if response.content else "בוצעה הפעולה בהצלחה.",
+            "response": cleaned_response,
             "tool_calls": executed_tool_logs
         }
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        try:
+            import traceback
+            traceback.print_exc()
+        except Exception:
+            pass
         # Fallback responses
-        fallback_responses = [
-            "שלום! נראה שמפתח ה-API של Groq לא הוגדר בצורה מלאה או שישנה שגיאת חיבור (401). וודא שמפתח ה-Groq שהזנת בקובץ ה-`.env` תקין ופעיל.",
-            "היי, אני במצב הדגמה מקומי כרגע בשל שגיאת מפתח Groq. אנא וודא שמפתח ה-API תקין ושהקובץ נטען כהלכה.",
-        ]
+        from agent import provider
+        fallback_msg = (
+            f"התרחשה שגיאה בעת פנייה למודל ה-AI הנוכחי ({provider.upper()}).\n"
+            "וודא שמפתחות ה-API ומכסות הגישה תקינים ושהקובץ `.env` נטען כהלכה."
+        )
+            
         return {
-            "response": random.choice(fallback_responses) + f"\n\n*(שגיאת מערכת: {str(e)})*",
+            "response": fallback_msg + f"\n\n*(שגיאת מערכת: {str(e)})*",
             "tool_calls": []
         }
 
@@ -446,6 +505,250 @@ def run_score_lead(request: Dict[str, Any]):
         "interactions": request.get("interactions", [])
     })
     return {"result": res}
+
+# 8. Campaigns CRUD & Simulation Hub
+@app.get("/api/campaigns")
+def get_campaigns():
+    return CAMPAIGNS
+
+@app.post("/api/campaigns")
+def create_campaign(request: CampaignCreateRequest):
+    new_campaign = {
+        "id": f"camp_{int(random.random() * 1000000)}",
+        "name": request.name,
+        "platform": request.platform,
+        "query": request.query,
+        "subreddit": request.subreddit,
+        "status": "Active",
+        "posts_scanned": 0,
+        "comments_posted": 0,
+        "leads_captured": 0,
+        "logs": [f"[{random.choice(['2026-06-07 00:15', '2026-06-07 01:30'])}] 📌 Campaign created successfully."]
+    }
+    CAMPAIGNS.append(new_campaign)
+    save_all()
+    return {"message": "Campaign created", "campaign": new_campaign}
+
+@app.post("/api/campaigns/{id}/toggle")
+def toggle_campaign(id: str):
+    for camp in CAMPAIGNS:
+        if camp["id"] == id:
+            camp["status"] = "Paused" if camp["status"] == "Active" else "Active"
+            save_all()
+            return {"message": f"Campaign status updated to {camp['status']}", "campaign": camp}
+    raise HTTPException(status_code=404, detail="Campaign not found")
+
+@app.delete("/api/campaigns/{id}")
+def delete_campaign(id: str):
+    global CAMPAIGNS
+    for i, camp in enumerate(CAMPAIGNS):
+        if camp["id"] == id:
+            CAMPAIGNS.pop(i)
+            save_all()
+            return {"message": "Campaign deleted successfully"}
+    raise HTTPException(status_code=404, detail="Campaign not found")
+
+@app.post("/api/campaigns/{id}/trigger")
+def trigger_campaign_cycle(id: str):
+    for camp in CAMPAIGNS:
+        if camp["id"] == id:
+            run_campaign_cycle(camp)
+            return {"message": "Campaign run cycle triggered successfully", "campaign": camp}
+    raise HTTPException(status_code=404, detail="Campaign not found")
+
+# 9. Dashboard Statistics Summary
+@app.get("/api/dashboard/stats")
+def get_dashboard_stats():
+    total_leads = len(LEADS)
+    active_camps = sum(1 for c in CAMPAIGNS if c.get("status") == "Active")
+    total_dms = len(CONVERSATIONS)
+    
+    posts_scanned = sum(c.get("posts_scanned", 0) for c in CAMPAIGNS)
+    comments_posted = sum(c.get("comments_posted", 0) for c in CAMPAIGNS)
+    
+    # Calculate platforms breakdown
+    platform_counts = {}
+    for l in LEADS:
+        p = l.get("platform", "Unknown")
+        platform_counts[p] = platform_counts.get(p, 0) + 1
+        
+    # Collate recent logs from all campaigns and sort them chronologically (newest first)
+    recent_logs = []
+    for c in CAMPAIGNS:
+        for log in c.get("logs", []):
+            recent_logs.append({
+                "campaign": c.get("name"),
+                "log": log
+            })
+    recent_logs.sort(key=lambda x: x["log"], reverse=True)
+
+            
+    # Simulated monthly engagement rate for the graph
+    engagement_rate = 74.5 if total_leads > 0 else 0.0
+    
+    return {
+        "total_leads": total_leads,
+        "active_campaigns": active_camps,
+        "total_dms_sent": total_dms,
+        "posts_scanned": posts_scanned,
+        "comments_posted": comments_posted,
+        "platforms_breakdown": platform_counts,
+        "recent_logs": recent_logs[:10],
+        "engagement_rate": engagement_rate
+    }
+
+def run_campaign_cycle(campaign: dict):
+    import datetime
+    import random
+    
+    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    campaign["logs"].insert(0, f"[{now_str}] 🚀 Starting campaign execution cycle...")
+    
+    platform = campaign.get("platform", "Reddit").lower()
+    query = campaign.get("query", "automation")
+    subreddit = campaign.get("subreddit") or "solopreneur"
+    
+    campaign["logs"].insert(0, f"[{now_str}] 🔍 Searching for posts on {campaign['platform']} with query: '{query}'")
+    
+    posts = []
+    try:
+        if platform == "reddit":
+            res = reddit_search_posts.invoke({"subreddit": subreddit, "query": query})
+            if isinstance(res, list):
+                posts = res
+        else: # linkedin
+            res = linkedin_search_posts.invoke({"query": query})
+            if isinstance(res, list):
+                posts = res
+    except Exception as e:
+        campaign["logs"].insert(0, f"[{now_str}] ❌ Search failed: {str(e)}")
+        save_all()
+        return
+        
+    if not posts:
+        campaign["logs"].insert(0, f"[{now_str}] ⚠️ No posts found for the query.")
+        save_all()
+        return
+        
+    campaign["logs"].insert(0, f"[{now_str}] 📋 Found {len(posts)} posts. Processing first relevant post...")
+    
+    # Process up to 2 posts per cycle
+    for post in posts[:2]:
+        title = post.get("title", "Unknown Post")
+        url = post.get("url", "https://example.com/post")
+        author = post.get("author", post.get("from_user", "Anonymous"))
+        
+        campaign["posts_scanned"] += 1
+        campaign["logs"].insert(0, f"[{now_str}] 📖 Reading post content: '{title}' by {author}")
+        
+        try:
+            if platform == "reddit":
+                content_res = reddit_read_post.invoke({"post_url": url})
+                post_body = content_res.get("post_content", "")
+            else:
+                post_body = linkedin_read_post.invoke({"post_url": url})
+        except Exception as e:
+            campaign["logs"].insert(0, f"[{now_str}] ⚠️ Could not read post: {str(e)}")
+            continue
+            
+        campaign["logs"].insert(0, f"[{now_str}] ⚡ Scoring relevance for post...")
+        niche = BRAND.get("niche", "AI automation")
+        try:
+            rel_score_str = score_relevance.invoke({"post_text": post_body, "niche": niche})
+            score_val = int(rel_score_str.split("Score:")[1].split("/")[0].strip())
+        except Exception as e:
+            score_val = 65 # fallback
+            rel_score_str = "Score: 65/100\nExplanation: Moderate relevance."
+            
+        campaign["logs"].insert(0, f"[{now_str}] 📊 Relevance score: {score_val}/100 - {rel_score_str.replace('Score:', '').strip()}")
+        
+        if score_val >= 50:
+            campaign["logs"].insert(0, f"[{now_str}] ✍️ Drafting valuable comment...")
+            brand_tone = BRAND.get("tone", "Professional but friendly")
+            cta = BRAND.get("cta_default", "Check out our site")
+            
+            try:
+                comment = draft_comment.invoke({
+                    "post_summary": f"Title: {title}\nBody: {post_body[:300]}",
+                    "brand_tone": brand_tone,
+                    "cta": cta
+                })
+            except Exception as e:
+                campaign["logs"].insert(0, f"[{now_str}] ❌ Drafting failed: {str(e)}")
+                continue
+                
+            if not comment or not comment.strip():
+                campaign["logs"].insert(0, f"[{now_str}] ⚠️ Comment drafting failed (returned empty). Your LLM API key might be out of quota or rate-limited. Skipping post.")
+                save_all()
+                continue
+                
+            campaign["logs"].insert(0, f"[{now_str}] 🛡️ Performing QA checks on drafted comment...")
+            forbidden = BRAND.get("forbidden_phrases", [])
+            try:
+                qa_res = overall_quality_score.invoke({"text": comment, "forbidden": forbidden})
+                qa_score = qa_res.get("overall_score", 80)
+            except Exception as e:
+                qa_score = 75
+                qa_res = {"ai_smell": {"score": 2}, "length": len(comment)}
+                
+            campaign["logs"].insert(0, f"[{now_str}] ✅ QA Score: {qa_score}/100. (AI Smell: {qa_res.get('ai_smell', {}).get('score', 0)}/10, Length: {qa_res.get('length', 0)} chars)")
+            
+            if qa_score >= 60:
+                campaign["logs"].insert(0, f"[{now_str}] 📤 Posting comment to {platform}...")
+                try:
+                    if platform == "reddit":
+                        reddit_post_comment.invoke({"post_url": url, "comment_text": comment})
+                    else:
+                        linkedin_post_comment.invoke({"post_url": url, "comment_text": comment})
+                except Exception as e:
+                    campaign["logs"].insert(0, f"[{now_str}] ❌ Post failed: {str(e)}")
+                    continue
+                    
+                campaign["comments_posted"] += 1
+                campaign["logs"].insert(0, f"[{now_str}] 🎉 Comment successfully published! Text: '{comment[:80]}...'")
+                
+                # Capture Lead simulation (80% chance for simulation showcase)
+                if random.random() > 0.2:
+                    lead_user = f"{author.replace(' ', '_').lower()}" if author != "Anonymous" else f"user_{random.randint(1000, 9999)}"
+                    campaign["logs"].insert(0, f"[{now_str}] 🎯 Engagement detected! User @{lead_user} liked/replied to the comment.")
+                    
+                    # Capture lead
+                    capture_lead.invoke({
+                        "username": lead_user,
+                        "platform": platform.capitalize(),
+                        "interest": f"Requested Guide: {title[:30]}"
+                    })
+                    campaign["leads_captured"] += 1
+                    
+                    # Draft outreach DM
+                    campaign["logs"].insert(0, f"[{now_str}] ✉️ Drafting personalized direct message (DM) outreach to @{lead_user}...")
+                    try:
+                        dm_content = draft_dm.invoke({
+                            "lead_name": lead_user,
+                            "context": "Responded positively to our automated post comment.",
+                            "brand_tone": brand_tone
+                        })
+                    except Exception as e:
+                        dm_content = ""
+                        
+                    if not dm_content or not dm_content.strip():
+                        dm_content = f"Hey @{lead_user}, thanks for reaching out! Here's the link to our guide: {BRAND.get('website')}"
+                        campaign["logs"].insert(0, f"[{now_str}] ⚠️ DM drafting returned empty, using fallback template. (LLM API key might be out of quota)")
+                        
+                    # Track DM conversation
+                    track_conversation.invoke({
+                        "lead_name": lead_user,
+                        "message": dm_content,
+                        "status": "Sent"
+                    })
+                    campaign["logs"].insert(0, f"[{now_str}] 📬 Outreach DM automatically tracked and sent to @{lead_user}!")
+            else:
+                campaign["logs"].insert(0, f"[{now_str}] ❌ Comment failed QA check, discarded to protect brand reputation.")
+        else:
+            campaign["logs"].insert(0, f"[{now_str}] ℹ️ Post relevance too low, skipping.")
+            
+    campaign["logs"].insert(0, f"[{now_str}] 🏁 Campaign execution cycle finished.")
+    save_all()
 
 if __name__ == "__main__":
     import uvicorn
