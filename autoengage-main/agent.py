@@ -46,6 +46,8 @@ provider = os.getenv("LLM_PROVIDER")
 if not provider:
     if os.getenv("GEMINI_API_KEY"):
         provider = "gemini"
+    elif os.getenv("GROQ_API_KEY"):
+        provider = "groq"
     elif os.getenv("OPENAI_API_KEY"):
         provider = "openai"
     else:
@@ -64,6 +66,27 @@ if provider == "gemini":
         model=gemini_model,
         temperature=0,
         request_timeout=120.0,
+        max_retries=0,
+        **client_kwargs
+    )
+elif provider == "groq":
+    api_key = os.getenv("GROQ_API_KEY")
+    api_base = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    client_kwargs = {}
+    if api_base:
+        client_kwargs["openai_api_base"] = api_base
+        
+    groq_proxy = os.getenv("GROQ_PROXY")
+    if groq_proxy:
+        import httpx
+        client_kwargs["http_client"] = httpx.Client(proxy=groq_proxy)
+        client_kwargs["async_http_client"] = httpx.AsyncClient(proxy=groq_proxy)
+        
+    llm = ChatOpenAI(
+        model=groq_model,
+        openai_api_key=api_key,
+        temperature=0,
         max_retries=0,
         **client_kwargs
     )
@@ -134,9 +157,35 @@ TOOLS = [
 # Bind tools to model
 bound_llm = llm.bind_tools(TOOLS)
 
+# Setup fallback LLM if main is gemini and GROQ_API_KEY is available
+bound_fallback_llm = None
+if provider == "gemini" and os.getenv("GROQ_API_KEY"):
+    fallback_api_key = os.getenv("GROQ_API_KEY")
+    fallback_api_base = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
+    fallback_groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    fallback_kwargs = {}
+    if fallback_api_base:
+        fallback_kwargs["openai_api_base"] = fallback_api_base
+        
+    fallback_proxy = os.getenv("GROQ_PROXY")
+    if fallback_proxy:
+        import httpx
+        fallback_kwargs["http_client"] = httpx.Client(proxy=fallback_proxy)
+        fallback_kwargs["async_http_client"] = httpx.AsyncClient(proxy=fallback_proxy)
+        
+    fallback_llm = ChatOpenAI(
+        model=fallback_groq_model,
+        openai_api_key=fallback_api_key,
+        temperature=0,
+        max_retries=0,
+        **fallback_kwargs
+    )
+    bound_fallback_llm = fallback_llm.bind_tools(TOOLS)
+
 class RetryingLLM:
-    def __init__(self, bound_llm):
+    def __init__(self, bound_llm, bound_fallback_llm=None):
         self.bound_llm = bound_llm
+        self.bound_fallback_llm = bound_fallback_llm
 
     def invoke(self, input, config=None, **kwargs):
         import time
@@ -148,12 +197,22 @@ class RetryingLLM:
                 return self.bound_llm.invoke(input, config, **kwargs)
             except Exception as e:
                 err_str = str(e).lower()
-                # If it's a quota limit (daily limit reached), do not retry as it won't reset soon
-                if "quota exceeded" in err_str or "quota_exceeded" in err_str:
-                    print("\n[Gemini Quota Exceeded] Daily/project limit reached. Failing immediately without retrying.")
+                
+                is_quota = "quota exceeded" in err_str or "quota_exceeded" in err_str
+                is_rate_limit = "429" in err_str or "resource_exhausted" in err_str
+                
+                # If it's a quota limit, or if we exhausted rate-limit retries
+                if is_quota or (is_rate_limit and attempt == max_attempts - 1):
+                    if self.bound_fallback_llm:
+                        print(f"\n[Gemini Error] {err_str}. Falling back to Groq...")
+                        try:
+                            return self.bound_fallback_llm.invoke(input, config, **kwargs)
+                        except Exception as fallback_err:
+                            print(f"\n[Fallback Error] Groq fallback failed: {fallback_err}")
+                            raise fallback_err
                     raise e
                     
-                if "429" in err_str or "resource_exhausted" in err_str:
+                if is_rate_limit:
                     if attempt < max_attempts - 1:
                         # Extract wait time
                         delay = 5.0
@@ -170,12 +229,21 @@ class RetryingLLM:
                         print(f"\n[Gemini Rate Limit] Hit 429 quota/rate limit. Waiting {delay:.2f} seconds before retrying (attempt {attempt+1}/{max_attempts})...")
                         time.sleep(delay)
                         continue
+                
+                # For any other errors (like 403, 500, network error, authentication errors), fallback immediately if fallback is available
+                if self.bound_fallback_llm:
+                    print(f"\n[Gemini Error] {e}. Falling back to Groq...")
+                    try:
+                        return self.bound_fallback_llm.invoke(input, config, **kwargs)
+                    except Exception as fallback_err:
+                        print(f"\n[Fallback Error] Groq fallback failed: {fallback_err}")
+                        raise fallback_err
                 raise e
 
     def __getattr__(self, name):
         return getattr(self.bound_llm, name)
 
-llm_with_tools = RetryingLLM(bound_llm)
+llm_with_tools = RetryingLLM(bound_llm, bound_fallback_llm)
 
 SYSTEM_PROMPT = """
 You are AutoEngage — an autonomous marketing AI agent.
