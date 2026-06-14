@@ -37,7 +37,7 @@ load_dotenv(Path(current_dir) / ".env")
 from persistence import CAMPAIGNS, save_all
 
 # Import agent objects and tools from existing scripts
-from agent import llm_with_tools, SYSTEM_PROMPT, HumanMessage, SystemMessage
+from agent import chat_llm_with_tools, llm_with_tools, SYSTEM_PROMPT, HumanMessage, SystemMessage
 from brand_profile import BRAND
 from lead_tools import LEADS, create_lead_magnet_outline, generate_lead_magnet_pdf, capture_lead
 from dm_tools import CONVERSATIONS, identify_warm_leads, draft_dm, track_conversation
@@ -208,7 +208,7 @@ def chat_with_agent(request: ChatRequest):
         
         # Max 8 iterations to prevent infinite loops
         for iteration in range(8):
-            response = llm_with_tools.invoke(messages)
+            response = chat_llm_with_tools.invoke(messages)
             
             # Check for tool calls using standard LangChain unified tool_calls
             tool_calls = getattr(response, "tool_calls", [])

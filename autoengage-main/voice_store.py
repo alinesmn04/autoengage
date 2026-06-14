@@ -25,11 +25,17 @@ def add_voice_sample(text: str, category: str) -> str:
     return f"Voice sample saved successfully in category: {category}"
 
 
+from typing import Any
+
 @tool
-def find_similar_voice(query: str, category: str, k: int = 3) -> list:
+def find_similar_voice(query: str, category: str, k: Any = 3) -> list:
     """
     Find similar writing samples by category.
     """
+    try:
+        k_val = int(k)
+    except Exception:
+        k_val = 3
 
     results = []
 
@@ -37,4 +43,4 @@ def find_similar_voice(query: str, category: str, k: int = 3) -> list:
         if sample["category"] == category:
             results.append(sample)
 
-    return results[:k]
+    return results[:k_val]

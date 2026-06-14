@@ -1,6 +1,19 @@
 import os
+import sys
 import json
 from dotenv import load_dotenv
+
+# Force standard streams to use UTF-8 and safely replace unsupported characters
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
 
 # Import upgraded tools
 from comment_tools import draft_comment, qa_check_comment

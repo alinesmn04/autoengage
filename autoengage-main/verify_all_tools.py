@@ -1,6 +1,19 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
+
+# Force standard streams to use UTF-8 and safely replace unsupported characters
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except Exception:
+        pass
 
 # Load environment
 current_dir = Path(__file__).parent.resolve()

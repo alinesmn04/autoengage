@@ -6,16 +6,32 @@ from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
 
+import json
+from typing import Union, List
+
 class CheckForbiddenPhrasesInput(BaseModel):
     text: str = Field(description="The text content to check for forbidden phrases.")
-    forbidden: list[str] = Field(description="A list of phrases that are forbidden in the text.")
+    forbidden: List[str] = Field(
+        description="A list of phrases that are forbidden in the text."
+    )
 
 
 @tool(args_schema=CheckForbiddenPhrasesInput)
-def check_forbidden_phrases(text: str, forbidden: list[str]) -> str:
+def check_forbidden_phrases(text: str, forbidden: List[str]) -> str:
     """
     Check if forbidden phrases exist in text.
     """
+    if isinstance(forbidden, str):
+        forbidden = forbidden.strip()
+        if forbidden.startswith("[") and forbidden.endswith("]"):
+            try:
+                forbidden = json.loads(forbidden)
+            except Exception:
+                forbidden = [forbidden]
+        elif not forbidden:
+            forbidden = []
+        else:
+            forbidden = [f.strip() for f in forbidden.split(",") if f.strip()]
 
     found = []
 
@@ -76,14 +92,27 @@ def fact_check(text: str) -> list:
 
 class OverallQualityScoreInput(BaseModel):
     text: str = Field(description="The text content to evaluate.")
-    forbidden: list[str] = Field(description="A list of forbidden phrases to check against.")
+    forbidden: List[str] = Field(
+        description="A list of forbidden phrases to check against."
+    )
 
 
 @tool(args_schema=OverallQualityScoreInput)
-def overall_quality_score(text: str, forbidden: list[str]) -> dict:
+def overall_quality_score(text: str, forbidden: List[str]) -> dict:
     """
     Generate an overall quality score.
     """
+    if isinstance(forbidden, str):
+        forbidden = forbidden.strip()
+        if forbidden.startswith("[") and forbidden.endswith("]"):
+            try:
+                forbidden = json.loads(forbidden)
+            except Exception:
+                forbidden = [forbidden]
+        elif not forbidden:
+            forbidden = []
+        else:
+            forbidden = [f.strip() for f in forbidden.split(",") if f.strip()]
 
     forbidden_result = check_forbidden_phrases.invoke({
         "text": text,

@@ -30,16 +30,33 @@ def draft_comment(post_summary: str, brand_tone: str, cta: str) -> str:
     return res
 
 
+import json
+from typing import Union, List
+
 class QaCheckCommentInput(BaseModel):
     comment: str = Field(description="The comment text to perform QA checks on.")
-    phrases_forbidden: list[str] = Field(description="List of forbidden phrases that must not appear in the comment.")
+    phrases_forbidden: List[str] = Field(
+        description="List of forbidden phrases that must not appear in the comment."
+    )
 
 
 @tool(args_schema=QaCheckCommentInput)
-def qa_check_comment(comment: str, phrases_forbidden: list[str]) -> dict:
+def qa_check_comment(comment: str, phrases_forbidden: List[str]) -> dict:
     """
     Perform QA checks on a generated comment.
     """
+    if isinstance(phrases_forbidden, str):
+        phrases_forbidden = phrases_forbidden.strip()
+        if phrases_forbidden.startswith("[") and phrases_forbidden.endswith("]"):
+            try:
+                phrases_forbidden = json.loads(phrases_forbidden)
+            except Exception:
+                phrases_forbidden = [phrases_forbidden]
+        elif not phrases_forbidden:
+            phrases_forbidden = []
+        else:
+            phrases_forbidden = [p.strip() for p in phrases_forbidden.split(",") if p.strip()]
+
     system_prompt = "You are a Quality Assurance bot that checks marketing comments for quality, forbidden phrases, AI tone, and length."
     user_prompt = (
         f"Evaluate the following comment:\n\"{comment}\"\n\n"

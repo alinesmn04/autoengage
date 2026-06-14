@@ -1,14 +1,13 @@
 {
   "brand": {
-    "name": "TechFlow",
+    "name": "TechFlow AI",
     "niche": "AI automation for small businesses",
     "tone": "Professional but friendly",
-    "target_audience": "Small business owners, freelancers, and entrepreneurs",
-    "unique_value": "We make AI simple and practical for everyday business tasks",
+    "target_audience": "Small business owners and entrepreneurs",
+    "unique_value": "We make AI simple and practical",
     "forbidden_phrases": [
       "buy now",
-      "limited time",
-      "guaranteed"
+      "limited time"
     ],
     "cta_default": "Comment GUIDE for our free automation guide",
     "website": "https://techflow.example.com"
@@ -27,7 +26,24 @@
       "status": "Sent"
     }
   ],
-  "voice_samples": [],
+  "voice_samples": [
+    {
+      "text": "Hello, I'm AutoEngage — an autonomous marketing AI agent. I can discover viral content, create comments and posts, perform QA checks, generate lead magnets, analyze engagement, and maintain a human writing style.",
+      "category": "introduction"
+    },
+    {
+      "text": "Hello, I'm AutoEngage - an autonomous marketing AI agent. I can discover viral content, create comments and posts, perform QA checks, generate lead magnets, analyze engagement, and maintain a human writing style.",
+      "category": "introduction"
+    },
+    {
+      "text": "Hello, I'm AutoEngage — an autonomous marketing AI agent. I can discover viral content, create comments and posts, perform QA checks, generate lead magnets, analyze engagement, and maintain a human writing style.",
+      "category": "introduction"
+    },
+    {
+      "text": "שלום, אני AutoEngage, סוכן שיווק אוטונומי. אני יכול לסייע בגילוי תוכן ויראלי, יצירת תגובות ופוסטים, ביצוע בדיקות איכות, יצירת מגנטים, ניתוח התעניינות ושמירה על סגנון כתיבה אנושי.",
+      "category": "introduction"
+    }
+  ],
   "campaigns": [
     {
       "id": "camp_20742",
@@ -35,11 +51,13 @@
       "platform": "Reddit",
       "query": "automation",
       "subreddit": "solopreneur",
-      "status": "Active",
+      "status": "Paused",
       "posts_scanned": 5,
       "comments_posted": 1,
       "leads_captured": 0,
       "logs": [
+        "[2026-06-14 10:12:38] 🔍 Searching for posts on Reddit with query: 'automation'",
+        "[2026-06-14 10:12:38] 🚀 Starting campaign execution cycle...",
         "[2026-06-07 14:36:05] 🏁 Campaign execution cycle finished.",
         "[2026-06-07 14:36:05] ℹ️ Post relevance too low, skipping.",
         "[2026-06-07 14:36:05] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
