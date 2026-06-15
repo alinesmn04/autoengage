@@ -293,8 +293,13 @@ def chat_with_agent(request: ChatRequest):
             pass
         # Fallback responses
         from agent import provider
+        err_str = str(e).lower()
+        failed_provider = provider.upper()
+        if "groq" in err_str or "llama" in err_str or "invalid_api_key" in err_str or "gsk_" in err_str:
+            failed_provider = "GROQ (Fallback)"
+            
         fallback_msg = (
-            f"התרחשה שגיאה בעת פנייה למודל ה-AI הנוכחי ({provider.upper()}).\n"
+            f"התרחשה שגיאה בעת פנייה למודל ה-AI הנוכחי ({failed_provider}).\n"
             "וודא שמפתחות ה-API ומכסות הגישה תקינים ושהקובץ `.env` נטען כהלכה."
         )
             

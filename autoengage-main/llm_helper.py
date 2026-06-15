@@ -220,6 +220,14 @@ def generate_text(system_prompt: str, user_prompt: str) -> str:
                 except Exception as fallback_err:
                     fb_err_str = str(fallback_err).lower()
 
+                    if _is_auth_error(fb_err_str):
+                        if rotate_groq_key():
+                            print("[Groq Fallback] Auth error (bad key) — rotated to backup key, retrying...")
+                            fallback_llm = get_fallback_llm()
+                            continue
+                        print(f"[Groq Fallback] All keys invalid or auth failed: {fallback_err}")
+                        break
+
                     if _is_quota_error(fb_err_str):
                         if rotate_groq_key():
                             print("[Groq Fallback] Quota exceeded — rotated to backup key, retrying...")

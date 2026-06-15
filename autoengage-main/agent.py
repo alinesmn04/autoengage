@@ -289,9 +289,18 @@ class RetryingLLM:
                     return fallback_bound.invoke(input, config, **kwargs)
                 except Exception as fallback_err:
                     fb_err_str = str(fallback_err).lower()
-                    is_fb_quota = "quota" in fb_err_str or "exceeded" in fb_err_str
+                    is_fb_quota = "quota" in fb_err_str or "exceeded" in fb_err_str or "quota_exceeded" in fb_err_str
                     is_fb_rate_limit = "429" in fb_err_str or "resource_exhausted" in fb_err_str or "rate_limit" in fb_err_str or "rate limit" in fb_err_str
+                    is_fb_auth = "unauthenticated" in fb_err_str or "401" in fb_err_str or "invalid key" in fb_err_str or "api_key" in fb_err_str or "403" in fb_err_str
                     
+                    if is_fb_auth:
+                        if is_groq_model(self.bound_fallback_llm) and rotate_groq_key():
+                            if fallback_attempt < max_attempts - 1:
+                                print(f"\n[Groq Fallback] Auth error (bad key) — rotated to next Groq key and retrying...")
+                                continue
+                        print(f"\n[Fallback Auth Error] Authentication failed on fallback. Skipping retries.")
+                        raise fallback_err
+
                     if is_fb_quota:
                         if is_groq_model(self.bound_fallback_llm) and rotate_groq_key():
                             if fallback_attempt < max_attempts - 1:
