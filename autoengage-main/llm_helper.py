@@ -239,6 +239,14 @@ def generate_text(system_prompt: str, user_prompt: str) -> str:
                     if _is_rate_limit_error(fb_err_str) and fb_attempt < max_attempts - 1:
                         delay = _extract_retry_delay(fb_err_str, fb_attempt)
                         if delay > 8.0:
+                            if rotate_groq_key():
+                                print(f"[Groq Fallback] Retry delay {delay:.1f}s too high — rotated key, retrying...")
+                                fallback_llm = get_fallback_llm()
+                                continue
+                            if delay <= 15.0:
+                                print(f"[Groq Fallback Rate Limit] Delay {delay:.1f}s is high but no backup key. Waiting and retrying...")
+                                time.sleep(delay)
+                                continue
                             print(f"[Groq Fallback] Retry delay {delay:.1f}s too high — aborting.")
                             break
                         print(f"[Groq Fallback Rate Limit] Waiting {delay:.1f}s (attempt {fb_attempt + 1}/{max_attempts})...")

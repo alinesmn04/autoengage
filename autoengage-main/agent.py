@@ -261,6 +261,11 @@ class RetryingLLM:
                                     print(f"[Groq Primary] Delay too high. Rotated to backup Groq key and retrying...")
                                     self.bound_llm = get_groq_bound_llm()
                                     continue
+                            # If rotation failed/not possible, wait if delay is reasonable (e.g. <= 15s)
+                            if delay <= 15.0:
+                                print(f"\n[Primary Rate Limit] Delay {delay:.2f}s is high but no backup key. Waiting and retrying...")
+                                time.sleep(delay)
+                                continue
                             print(f"\n[Primary Rate Limit] Delay {delay:.2f}s is too high. Falling back immediately.")
                             primary_failed = True
                             break
@@ -321,6 +326,11 @@ class RetryingLLM:
                         if delay > 3.0:
                             if is_groq_model(self.bound_fallback_llm) and rotate_groq_key():
                                 print(f"\n[Groq Fallback] Delay too high. Rotated to backup Groq key and retrying...")
+                                continue
+                            # If rotation failed/not possible, wait if delay is reasonable (e.g. <= 15s)
+                            if delay <= 15.0:
+                                print(f"\n[Fallback Rate Limit] Delay {delay:.2f}s is high but no backup key. Waiting and retrying...")
+                                time.sleep(delay)
                                 continue
                             print(f"\n[Fallback Rate Limit] Delay {delay:.2f}s is too high. Skipping retries.")
                             raise fallback_err
