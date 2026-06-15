@@ -45,6 +45,7 @@ def _get_groq_llm(temperature=0.7):
         model=model,
         openai_api_key=api_key,
         temperature=temperature,
+        max_tokens=800,  # Token budget: cap Groq output
         max_retries=0,
         **kwargs
     )

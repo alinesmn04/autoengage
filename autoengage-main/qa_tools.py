@@ -5,9 +5,18 @@ QA tools for AutoEngage.
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 
-
 import json
 from typing import Union, List
+
+# AI "smell" words — checked locally, no LLM needed
+_AI_SMELL_WORDS = [
+    "revolutionary", "game changer", "game-changer", "next level", "next-level",
+    "cutting-edge", "cutting edge", "unlock", "let's dive in", "dive in",
+    "in summary", "in conclusion", "remember that", "it's important to note",
+    "groundbreaking", "transformative", "unprecedented", "leverage", "synergy",
+    "paradigm shift", "empower", "seamlessly", "robust solution", "delve",
+    "it is worth noting", "foster", "navigate", "realm", "unleash", "harness"
+]
 
 class CheckForbiddenPhrasesInput(BaseModel):
     text: str = Field(description="The text content to check for forbidden phrases.")
@@ -19,7 +28,7 @@ class CheckForbiddenPhrasesInput(BaseModel):
 @tool(args_schema=CheckForbiddenPhrasesInput)
 def check_forbidden_phrases(text: str, forbidden: List[str]) -> str:
     """
-    Check if forbidden phrases exist in text.
+    Check if forbidden phrases exist in text. No LLM needed.
     """
     if isinstance(forbidden, str):
         forbidden = forbidden.strip()
@@ -33,59 +42,49 @@ def check_forbidden_phrases(text: str, forbidden: List[str]) -> str:
         else:
             forbidden = [f.strip() for f in forbidden.split(",") if f.strip()]
 
-    found = []
-
-    for phrase in forbidden:
-        if phrase.lower() in text.lower():
-            found.append(phrase)
+    found = [phrase for phrase in forbidden if phrase.lower() in text.lower()]
 
     if found:
         return f"❌ Forbidden phrases found: {', '.join(found)}"
-
     return "✅ No forbidden phrases found"
 
 
 @tool
 def check_ai_smell(text: str) -> dict:
     """
-    Estimate how AI-generated a text sounds.
+    Detect AI-generated patterns using local keyword matching (no LLM).
     """
-    from llm_helper import generate_json
-    system_prompt = "You are an expert editor who can spot generic, overly-enthusiastic AI-generated text."
-    user_prompt = (
-        f"Analyze this text:\n\"{text}\"\n\n"
-        f"Rate how much it sounds like a generic ChatGPT/AI output (score from 0 to 10, where 10 is extremely AI-smelling "
-        f"using words like revolutionary, game changer, next level, cutting-edge, unlock, let's dive in, remember that, in summary, etc., "
-        f"and 0 is completely natural human copywriting).\n\n"
-        f"Return a JSON object with exactly these keys:\n"
-        f"- \"score\": The integer score from 0 to 10.\n"
-        f"- \"explanation\": A short explanation of your score."
-    )
-    fallback = {
-        "score": 2,
-        "explanation": "Text sounds natural"
-    }
-    return generate_json(system_prompt, user_prompt, fallback)
+    text_lower = text.lower()
+    hits = [w for w in _AI_SMELL_WORDS if w in text_lower]
+    score = min(len(hits) * 2, 10)
+    if score >= 6:
+        explanation = f"Sounds AI-generated. Detected: {', '.join(hits[:3])}"
+    elif score >= 3:
+        explanation = f"Slightly AI-sounding. Detected: {', '.join(hits[:2])}"
+    else:
+        explanation = "Sounds natural."
+    return {"score": score, "explanation": explanation}
 
 
 @tool
 def fact_check(text: str) -> list:
     """
-    Perform a dynamic fact-check.
+    Perform a lightweight fact-check on the text.
     """
     from llm_helper import generate_json
-    system_prompt = "You are a professional fact-checker."
+    # Only call LLM if text is substantial
+    if len(text) < 80:
+        return [{"claim": text[:60], "status": "⚠️ Cannot verify"}]
+
+    system_prompt = "You are a fact-checker."
     user_prompt = (
-        f"Analyze the claims in the following text:\n\"{text}\"\n\n"
-        f"Extract the top 3 claims made and verify if they are likely true, false, or unverifiable.\n"
-        f"Return a JSON list of dictionaries. Each dictionary must have:\n"
-        f"- \"claim\": The claim text\n"
-        f"- \"status\": One of: \"✅ Likely true\", \"❌ Likely false\", or \"⚠️ Cannot verify\" with a brief reason."
+        f"Text: \"{text[:400]}\"\n\n"
+        f"List 2 main claims and their status. "
+        f"JSON list: [{{\"claim\":\"...\",\"status\":\"✅ Likely true|❌ Likely false|⚠️ Cannot verify\"}}]"
     )
     fallback = [
         {"claim": "AI improves productivity", "status": "✅ Likely true"},
-        {"claim": "Automation saves time", "status": "✅ Likely true"},
-        {"claim": "Guaranteed business growth", "status": "⚠️ Cannot verify"}
+        {"claim": "Automation saves time", "status": "✅ Likely true"}
     ]
     return generate_json(system_prompt, user_prompt, fallback)
 
@@ -100,7 +99,7 @@ class OverallQualityScoreInput(BaseModel):
 @tool(args_schema=OverallQualityScoreInput)
 def overall_quality_score(text: str, forbidden: List[str]) -> dict:
     """
-    Generate an overall quality score.
+    Generate an overall quality score. Uses only local checks — zero LLM calls.
     """
     if isinstance(forbidden, str):
         forbidden = forbidden.strip()
@@ -114,25 +113,15 @@ def overall_quality_score(text: str, forbidden: List[str]) -> dict:
         else:
             forbidden = [f.strip() for f in forbidden.split(",") if f.strip()]
 
-    forbidden_result = check_forbidden_phrases.invoke({
-        "text": text,
-        "forbidden": forbidden
-    })
-
-    ai_result = check_ai_smell.invoke({
-        "text": text
-    })
+    forbidden_result = check_forbidden_phrases.invoke({"text": text, "forbidden": forbidden})
+    ai_result = check_ai_smell.invoke({"text": text})
 
     score = 100
-
     if "❌" in forbidden_result:
         score -= 30
-
     score -= ai_result.get("score", 2) * 3
-
     if len(text) < 50:
         score -= 20
-
     score = max(score, 0)
 
     return {

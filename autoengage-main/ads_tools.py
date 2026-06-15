@@ -11,14 +11,11 @@ def research_competitor_ads(competitor_name: str) -> str:
     """
     Analyze competitor advertising style.
     """
-    system_prompt = "You are a competitive intelligence marketing researcher."
+    system_prompt = "Competitive marketing researcher."
     user_prompt = (
-        f"Analyze the advertising and marketing messaging style of the competitor \"{competitor_name}\".\n\n"
-        f"Return a structured breakdown detailing:\n"
-        f"- What they focus on (messaging angles)\n"
-        f"- Their typical CTA styles\n"
-        f"- Their core value propositions\n"
-        f"- The customer pain points they target."
+        f"Brief analysis of \"{competitor_name[:80]}\" ad strategy:\n"
+        f"- Main messaging angle\n- CTA style\n- Core value prop\n- Target pain point\n"
+        f"Keep it concise, max 150 words."
     )
     return generate_text(system_prompt, user_prompt)
 
@@ -28,18 +25,15 @@ def extract_ad_patterns(data_ads: str) -> list:
     """
     Extract common advertising patterns.
     """
-    system_prompt = "You are an advertising strategist specializing in extracting copywriting pattern formulas."
+    system_prompt = "Ad strategist extracting copywriting patterns."
     user_prompt = (
-        f"Analyze these competitor ads / marketing descriptions:\n{data_ads}\n\n"
-        f"Extract exactly 5 recurring, high-converting copywriting patterns, formulas, or strategies used here. "
-        f"Return them as a JSON list of strings."
+        f"From these ads: {data_ads[:400]}\n"
+        f"Extract 3 key patterns. JSON list of strings."
     )
     fallback = [
         "Use emotional hooks",
         "Short CTA sentences",
-        "Focus on customer problems",
-        "Highlight time-saving benefits",
-        "Use simple language"
+        "Focus on customer problems"
     ]
     return generate_json(system_prompt, user_prompt, fallback)
 
@@ -49,14 +43,14 @@ def suggest_ad_copy(patterns: str, brand_tone: str) -> list:
     """
     Generate ad copy ideas based on ad patterns.
     """
-    system_prompt = f"You are a conversion copywriter writing high-converting ad copy using the tone: {brand_tone}."
+    system_prompt = f"Conversion copywriter. Tone: {brand_tone}."
     user_prompt = (
-        f"Using these copywriting patterns/formulas: {patterns}\n\n"
-        f"Draft exactly 3 high-converting, distinct ad copy variations. Return them as a JSON list of strings."
+        f"Patterns: {patterns[:300]}\n"
+        f"Write 3 short ad copies. JSON list of strings."
     )
     fallback = [
         "Save hours every week with smart AI automation.",
-        "Your business deserves simpler workflows and faster results.",
+        "Your business deserves simpler workflows.",
         "Automate repetitive tasks and focus on growth."
     ]
     return generate_json(system_prompt, user_prompt, fallback)

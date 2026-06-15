@@ -48,25 +48,20 @@ def generate_insights(analytics: str) -> dict:
     Generate insights and recommendations from analytics.
     """
     from llm_helper import generate_json
-    system_prompt = "You are a senior marketing analyst."
+    system_prompt = "Marketing analyst."
     user_prompt = (
-        f"Based on the following engagement analysis report:\n{analytics}\n\n"
-        f"Generate a JSON object with exactly these keys:\n"
-        f"- \"insights\": A list of 5 detailed analytical findings/observations.\n"
-        f"- \"recommendations\": A list of 3 actionable strategic suggestions/recommendations to improve performance."
+        f"Analytics: {analytics[:300]}\n\n"
+        f"JSON: {{\"insights\":[3 findings],\"recommendations\":[2 actions]}}"
     )
     fallback = {
         "insights": [
-            "Posts about automation receive more engagement",
+            "Automation posts get more engagement",
             "Short posts perform better",
-            "Educational content attracts more comments",
-            "CTA increases interaction",
-            "LinkedIn performs best for professional content"
+            "Educational content attracts comments"
         ],
         "recommendations": [
             "Post more educational content",
-            "Use shorter captions",
-            "Add stronger CTA to posts"
+            "Add stronger CTA"
         ]
     }
     return generate_json(system_prompt, user_prompt, fallback)

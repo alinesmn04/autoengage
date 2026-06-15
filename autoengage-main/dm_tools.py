@@ -56,14 +56,10 @@ def draft_dm(lead_name: str, context: str, brand_tone: str) -> str:
     Create a personalized DM for a lead.
     """
     from llm_helper import generate_text
-    system_prompt = (
-        f"You are a sales copywriter writing personalized direct messages (DMs) "
-        f"to warm leads. The brand tone is: {brand_tone}."
-    )
+    system_prompt = f"Sales copywriter writing personal DMs. Tone: {brand_tone}."
     user_prompt = (
-        f"Draft a warm, personal, and conversational direct outreach message to {lead_name}.\n"
-        f"Context of their interaction: \"{context}\".\n\n"
-        f"Ensure it doesn't sound spammy, is helpful first, and invites them to have a conversation or download our free resource."
+        f"Short personal DM to {lead_name[:50]}. Context: \"{context[:150]}\". "
+        f"2-3 sentences, not spammy, helpful, invite conversation."
     )
     return generate_text(system_prompt, user_prompt)
 
