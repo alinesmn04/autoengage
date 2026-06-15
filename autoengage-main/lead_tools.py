@@ -5,6 +5,7 @@ Lead magnet tools for AutoEngage.
 from langchain_core.tools import tool
 from pydantic import BaseModel, Field
 from fpdf import FPDF
+from typing import List, Dict, Any
 
 # Simple in-memory lead storage
 from persistence import LEADS, save_all
@@ -64,19 +65,14 @@ def create_lead_magnet_outline(topic: str, target_audience: str) -> dict:
     return generate_json(system_prompt, user_prompt, fallback)
 
 
-class ChapterInput(BaseModel):
-    title: str = Field(description="Title of the chapter.")
-    summary: str = Field(description="Summary or content of the chapter.")
-
-
 class GenerateLeadMagnetPdfInput(BaseModel):
     title: str = Field(description="Title of the lead magnet.")
-    chapters: list[ChapterInput] = Field(description="List of chapters, each containing a title and summary.")
+    chapters: List[Dict[str, Any]] = Field(description="List of chapters, each a dict with 'title' and 'summary' keys.")
     filename: str = Field(description="Output filename/path for the generated PDF.")
 
 
 @tool(args_schema=GenerateLeadMagnetPdfInput)
-def generate_lead_magnet_pdf(title: str, chapters: list[dict], filename: str) -> str:
+def generate_lead_magnet_pdf(title: str, chapters: List[Dict[str, Any]], filename: str) -> str:
     """
     Generate a beautifully styled PDF lead magnet file.
     """

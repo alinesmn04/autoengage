@@ -332,33 +332,9 @@ class RetryingLLM:
 
 llm_with_tools = RetryingLLM(bound_llm, bound_fallback_llm)
 
-# Create chat model specifically with Groq as primary (if available) and Gemini as fallback
-chat_llm_with_tools = None
-
-if get_groq_api_key():
-    bound_chat_llm = get_groq_bound_llm(temperature=0)
-    
-    bound_chat_fallback_llm = None
-    if os.getenv("GEMINI_API_KEY"):
-        chat_gemini_base = os.getenv("GEMINI_API_BASE")
-        chat_gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-        chat_gemini_kwargs = {}
-        if chat_gemini_base:
-            chat_gemini_kwargs["google_api_base"] = chat_gemini_base
-            
-        chat_fallback_llm = ChatGoogleGenerativeAI(
-            model=chat_gemini_model,
-            temperature=0,
-            max_output_tokens=1200,  # Token budget: cap responses
-            request_timeout=120.0,
-            max_retries=0,
-            **chat_gemini_kwargs
-        )
-        bound_chat_fallback_llm = chat_fallback_llm.bind_tools(TOOLS)
-        
-    chat_llm_with_tools = RetryingLLM(bound_chat_llm, bound_chat_fallback_llm)
-else:
-    chat_llm_with_tools = llm_with_tools
+# Chat uses the same primary/fallback order: Gemini first, Groq as fallback
+# (Groq as primary caused Pydantic schema errors with complex tool definitions)
+chat_llm_with_tools = llm_with_tools
 
 SYSTEM_PROMPT = """You are AutoEngage, an autonomous marketing AI agent.
 Tools: discover viral content, draft comments, QA checks, lead magnets, analytics, DMs.
