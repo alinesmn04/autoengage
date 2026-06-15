@@ -34,7 +34,7 @@ def _get_groq_llm(temperature=0.7):
     if not api_key:
         return None
     api_base = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
-    model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     kwargs = {"openai_api_base": api_base}
     groq_proxy = os.getenv("GROQ_PROXY")
     if groq_proxy:
@@ -119,6 +119,8 @@ def _is_auth_error(err_str: str) -> bool:
     ])
 
 def _is_quota_error(err_str: str) -> bool:
+    if "rate_limit" in err_str or "rate limit" in err_str or "429" in err_str or "resource_exhausted" in err_str:
+        return False
     return any(k in err_str for k in ["quota", "exceeded", "billing"])
 
 def _is_rate_limit_error(err_str: str) -> bool:

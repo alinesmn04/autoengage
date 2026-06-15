@@ -75,7 +75,7 @@ if provider == "gemini":
 elif provider == "groq":
     api_key = get_groq_api_key()
     api_base = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
-    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     client_kwargs = {}
     if api_base:
         client_kwargs["openai_api_base"] = api_base
@@ -161,7 +161,7 @@ TOOLS = [
 def get_groq_bound_llm(temperature=0):
     api_key = get_groq_api_key()
     api_base = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1")
-    groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     client_kwargs = {}
     if api_base:
         client_kwargs["openai_api_base"] = api_base
@@ -218,8 +218,8 @@ class RetryingLLM:
                 last_err = e
                 err_str = str(e).lower()
                 
-                is_quota = "quota" in err_str or "exceeded" in err_str or "quota_exceeded" in err_str
                 is_rate_limit = "429" in err_str or "resource_exhausted" in err_str or "rate limit" in err_str or "rate_limit" in err_str
+                is_quota = ("quota" in err_str or "exceeded" in err_str or "quota_exceeded" in err_str) and not is_rate_limit
                 is_auth_error = "unauthenticated" in err_str or "401" in err_str or "invalid key" in err_str or "api_key" in err_str or "403" in err_str
                 
                 # If it's a credentials/auth error, we fallback immediately without retrying
@@ -294,8 +294,8 @@ class RetryingLLM:
                     return fallback_bound.invoke(input, config, **kwargs)
                 except Exception as fallback_err:
                     fb_err_str = str(fallback_err).lower()
-                    is_fb_quota = "quota" in fb_err_str or "exceeded" in fb_err_str or "quota_exceeded" in fb_err_str
                     is_fb_rate_limit = "429" in fb_err_str or "resource_exhausted" in fb_err_str or "rate_limit" in fb_err_str or "rate limit" in fb_err_str
+                    is_fb_quota = ("quota" in fb_err_str or "exceeded" in fb_err_str or "quota_exceeded" in fb_err_str) and not is_fb_rate_limit
                     is_fb_auth = "unauthenticated" in fb_err_str or "401" in fb_err_str or "invalid key" in fb_err_str or "api_key" in fb_err_str or "403" in fb_err_str
                     
                     if is_fb_auth:

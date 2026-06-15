@@ -25,7 +25,7 @@ print(f"Groq Key starts with: {groq_key[:10] if groq_key else 'None'}...")
 try:
     from langchain_openai import ChatOpenAI
     llm = ChatOpenAI(
-        model="llama-3.3-70b-versatile",
+        model="llama-3.1-8b-instant",
         openai_api_key=groq_key,
         openai_api_base="https://api.groq.com/openai/v1"
     )
