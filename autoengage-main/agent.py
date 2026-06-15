@@ -229,9 +229,10 @@ class RetryingLLM:
                 if is_quota or (is_rate_limit and attempt == max_attempts - 1):
                     # Try rotating the Groq key if we are on Groq
                     if is_groq_model(self.bound_llm) and rotate_groq_key():
-                        print(f"[Groq Primary] Quota exceeded. Rotated to backup Groq key and retrying...")
-                        self.bound_llm = get_groq_bound_llm()
-                        continue
+                        if attempt < max_attempts - 1:
+                            print(f"[Groq Primary] Quota exceeded. Rotated to backup Groq key and retrying...")
+                            self.bound_llm = get_groq_bound_llm()
+                            continue
                     print(f"\n[Primary Quota/Limit] Skipping retries and falling back.")
                     primary_failed = True
                     break
@@ -253,9 +254,10 @@ class RetryingLLM:
                         if delay > 3.0:
                             # Try rotating the Groq key if we are on Groq
                             if is_groq_model(self.bound_llm) and rotate_groq_key():
-                                print(f"[Groq Primary] Delay too high. Rotated to backup Groq key and retrying...")
-                                self.bound_llm = get_groq_bound_llm()
-                                continue
+                                if attempt < max_attempts - 1:
+                                    print(f"[Groq Primary] Delay too high. Rotated to backup Groq key and retrying...")
+                                    self.bound_llm = get_groq_bound_llm()
+                                    continue
                             print(f"\n[Primary Rate Limit] Delay {delay:.2f}s is too high. Falling back immediately.")
                             primary_failed = True
                             break
@@ -289,8 +291,9 @@ class RetryingLLM:
                     
                     if is_fb_quota:
                         if is_groq_model(self.bound_fallback_llm) and rotate_groq_key():
-                            print(f"\n[Groq Fallback] Quota exceeded. Rotated to backup Groq key and retrying...")
-                            continue
+                            if fallback_attempt < max_attempts - 1:
+                                print(f"\n[Groq Fallback] Quota exceeded. Rotated to backup Groq key and retrying...")
+                                continue
                         print(f"\n[Fallback Quota Error] Quota exceeded on fallback. Skipping retries.")
                         raise fallback_err
                         
@@ -317,6 +320,8 @@ class RetryingLLM:
                     raise fallback_err
         
         # If fallback is not available and primary failed, raise an exception
+        if last_err:
+            raise last_err
         raise RuntimeError("Primary LLM failed and no fallback LLM is configured.")
 
     def __getattr__(self, name):
