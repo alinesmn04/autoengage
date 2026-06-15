@@ -193,21 +193,23 @@ def chat_with_agent(request: ChatRequest):
         
         messages = [SystemMessage(content=SYSTEM_PROMPT)]
         if request.history:
-            for msg in request.history:
+            # Token budget: keep only the last 6 messages (3 turns) to avoid ballooning context
+            trimmed_history = request.history[-6:]
+            for msg in trimmed_history:
                 role = msg.get("role")
-                content = msg.get("content")
+                content = msg.get("content", "")[:1500]  # cap each history message
                 if role == "user":
                     messages.append(HumanMessage(content=content))
                 elif role in ["agent", "assistant"]:
                     messages.append(AIMessage(content=content))
                 else:
                     messages.append(SystemMessage(content=content))
-        messages.append(HumanMessage(content=request.message))
+        messages.append(HumanMessage(content=request.message[:2000]))  # cap user message
         
         executed_tool_logs = []
         
-        # Max 8 iterations to prevent infinite loops
-        for iteration in range(8):
+        # Max 5 iterations to stay within token budget
+        for iteration in range(5):
             response = chat_llm_with_tools.invoke(messages)
             
             # Check for tool calls using standard LangChain unified tool_calls
@@ -249,12 +251,17 @@ def chat_with_agent(request: ChatRequest):
                 else:
                     t_res = f"Tool {t_name} not found."
                 
+                # Token budget: truncate tool results to prevent context explosion
+                t_res_str = str(t_res)[:500]
+                if len(str(t_res)) > 500:
+                    t_res_str += "... [truncated]"
+                
                 import json
                 executed_tool_logs.append(
                     f"🔧 כלי הופעל: {t_name}\nפרמטרים: {json.dumps(t_args, ensure_ascii=False)}\nתוצאה: {str(t_res)[:400]}..."
                 )
                 
-                messages.append(ToolMessage(content=str(t_res), tool_call_id=t_id))
+                messages.append(ToolMessage(content=t_res_str, tool_call_id=t_id))
         
         # Clean up response.content to ensure it is a plain string
         cleaned_response = response.content

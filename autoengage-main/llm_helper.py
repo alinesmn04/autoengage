@@ -83,6 +83,7 @@ def get_llm():
         return ChatGoogleGenerativeAI(
             model=model,
             temperature=0.7,
+            max_output_tokens=1200,  # Token budget: cap output
             max_retries=0,
             **kwargs
         )

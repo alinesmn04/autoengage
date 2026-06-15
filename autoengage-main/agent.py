@@ -59,7 +59,7 @@ print(f"[LLM] AutoEngage using LLM Provider: {provider.upper()}")
 
 if provider == "gemini":
     api_base = os.getenv("GEMINI_API_BASE")
-    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     client_kwargs = {}
     if api_base:
         client_kwargs["google_api_base"] = api_base
@@ -67,6 +67,7 @@ if provider == "gemini":
     llm = ChatGoogleGenerativeAI(
         model=gemini_model,
         temperature=0,
+        max_output_tokens=1200,  # Token budget: cap responses
         request_timeout=120.0,
         max_retries=0,
         **client_kwargs
@@ -338,7 +339,7 @@ if get_groq_api_key():
     bound_chat_fallback_llm = None
     if os.getenv("GEMINI_API_KEY"):
         chat_gemini_base = os.getenv("GEMINI_API_BASE")
-        chat_gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        chat_gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
         chat_gemini_kwargs = {}
         if chat_gemini_base:
             chat_gemini_kwargs["google_api_base"] = chat_gemini_base
@@ -346,6 +347,7 @@ if get_groq_api_key():
         chat_fallback_llm = ChatGoogleGenerativeAI(
             model=chat_gemini_model,
             temperature=0,
+            max_output_tokens=1200,  # Token budget: cap responses
             request_timeout=120.0,
             max_retries=0,
             **chat_gemini_kwargs
@@ -396,7 +398,7 @@ if __name__ == "__main__":
         ]
 
         # Autonomous multi-turn loop
-        max_iterations = 8
+        max_iterations = 5  # Token budget: limit agent loops
         for iteration in range(max_iterations):
             try:
                 response = chat_llm_with_tools.invoke(messages)
