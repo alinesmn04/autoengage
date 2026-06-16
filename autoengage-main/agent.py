@@ -185,10 +185,28 @@ def get_groq_bound_llm(temperature=0):
 # Bind tools to model
 bound_llm = llm.bind_tools(TOOLS)
 
-# Setup fallback LLM if main is gemini and GROQ_API_KEY is available
+def get_gemini_bound_llm(temperature=0):
+    api_base = os.getenv("GEMINI_API_BASE")
+    gemini_model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+    client_kwargs = {}
+    if api_base:
+        client_kwargs["google_api_base"] = api_base
+    gemini_llm = ChatGoogleGenerativeAI(
+        model=gemini_model,
+        temperature=temperature,
+        max_output_tokens=1200,
+        request_timeout=120.0,
+        max_retries=0,
+        **client_kwargs
+    )
+    return gemini_llm.bind_tools(TOOLS)
+
+# Setup fallback LLM based on provider
 bound_fallback_llm = None
 if provider == "gemini" and get_groq_api_key():
     bound_fallback_llm = get_groq_bound_llm()
+elif provider == "groq" and os.getenv("GEMINI_API_KEY"):
+    bound_fallback_llm = get_gemini_bound_llm()
 
 def is_groq_model(model):
     if model is None:
@@ -261,8 +279,8 @@ class RetryingLLM:
                                     print(f"[Groq Primary] Delay too high. Rotated to backup Groq key and retrying...")
                                     self.bound_llm = get_groq_bound_llm()
                                     continue
-                            # If rotation failed/not possible, wait if delay is reasonable (e.g. <= 15s)
-                            if delay <= 15.0:
+                            # If rotation failed/not possible, wait if delay is reasonable (e.g. <= 60s)
+                            if delay <= 60.0:
                                 print(f"\n[Primary Rate Limit] Delay {delay:.2f}s is high but no backup key. Waiting and retrying...")
                                 time.sleep(delay)
                                 continue
@@ -327,8 +345,8 @@ class RetryingLLM:
                             if is_groq_model(self.bound_fallback_llm) and rotate_groq_key():
                                 print(f"\n[Groq Fallback] Delay too high. Rotated to backup Groq key and retrying...")
                                 continue
-                            # If rotation failed/not possible, wait if delay is reasonable (e.g. <= 15s)
-                            if delay <= 15.0:
+                            # If rotation failed/not possible, wait if delay is reasonable (e.g. <= 60s)
+                            if delay <= 60.0:
                                 print(f"\n[Fallback Rate Limit] Delay {delay:.2f}s is high but no backup key. Waiting and retrying...")
                                 time.sleep(delay)
                                 continue

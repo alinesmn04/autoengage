@@ -51,12 +51,43 @@ def _get_groq_llm(temperature=0.7):
     )
 
 def get_fallback_llm(temperature=0.7):
-    """Return a Groq LLM as fallback, or None if unavailable."""
-    if get_groq_api_key():
-        try:
-            return _get_groq_llm(temperature=temperature)
-        except Exception as e:
-            print(f"[Fallback] Error creating Groq LLM: {e}")
+    """Return the fallback LLM based on LLM_PROVIDER env var, or None if unavailable."""
+    provider = os.getenv("LLM_PROVIDER", "").lower()
+
+    # Auto-detect provider if not set
+    if not provider:
+        if os.getenv("GEMINI_API_KEY"):
+            provider = "gemini"
+        elif get_groq_api_key():
+            provider = "groq"
+        elif os.getenv("OPENAI_API_KEY"):
+            provider = "openai"
+        else:
+            provider = "gemini"
+
+    if provider == "gemini":
+        if get_groq_api_key():
+            try:
+                return _get_groq_llm(temperature=temperature)
+            except Exception as e:
+                print(f"[Fallback] Error creating Groq LLM: {e}")
+    elif provider == "groq":
+        if os.getenv("GEMINI_API_KEY"):
+            try:
+                model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+                kwargs = {}
+                api_base = os.getenv("GEMINI_API_BASE")
+                if api_base:
+                    kwargs["google_api_base"] = api_base
+                return ChatGoogleGenerativeAI(
+                    model=model,
+                    temperature=temperature,
+                    max_output_tokens=1200,
+                    max_retries=0,
+                    **kwargs
+                )
+            except Exception as e:
+                print(f"[Fallback] Error creating Gemini LLM: {e}")
     return None
 
 def get_llm():
@@ -209,56 +240,58 @@ def generate_text(system_prompt: str, user_prompt: str) -> str:
             print(f"[Primary LLM] Unexpected error (attempt {attempt + 1}): {e}")
             break
 
-    # ── Step 2: Groq fallback ────────────────────────────────────────────────
+    # ── Step 2: Fallback LLM ────────────────────────────────────────────────
     if res is None:
         fallback_llm = get_fallback_llm()
         if fallback_llm:
-            print("[Fallback] Switching to Groq LLM...")
+            fallback_name = "Groq" if isinstance(fallback_llm, ChatOpenAI) else "Gemini"
+            print(f"[Fallback] Switching to {fallback_name} LLM...")
             for fb_attempt in range(max_attempts):
                 try:
                     res = fallback_llm.invoke(messages)
-                    print("[Fallback] Groq responded successfully.")
+                    print(f"[Fallback] {fallback_name} responded successfully.")
                     break
                 except Exception as fallback_err:
                     fb_err_str = str(fallback_err).lower()
+                    is_groq_fb = isinstance(fallback_llm, ChatOpenAI)
 
                     if _is_auth_error(fb_err_str):
-                        if rotate_groq_key():
+                        if is_groq_fb and rotate_groq_key():
                             print("[Groq Fallback] Auth error (bad key) — rotated to backup key, retrying...")
                             fallback_llm = get_fallback_llm()
                             continue
-                        print(f"[Groq Fallback] All keys invalid or auth failed: {fallback_err}")
+                        print(f"[{fallback_name} Fallback] Auth failed: {fallback_err}")
                         break
 
                     if _is_quota_error(fb_err_str):
-                        if rotate_groq_key():
+                        if is_groq_fb and rotate_groq_key():
                             print("[Groq Fallback] Quota exceeded — rotated to backup key, retrying...")
                             fallback_llm = get_fallback_llm()
                             continue
-                        print(f"[Groq Fallback] All keys quota exceeded: {fallback_err}")
+                        print(f"[{fallback_name} Fallback] Quota exceeded: {fallback_err}")
                         break
 
                     if _is_rate_limit_error(fb_err_str) and fb_attempt < max_attempts - 1:
                         delay = _extract_retry_delay(fb_err_str, fb_attempt)
                         if delay > 8.0:
-                            if rotate_groq_key():
+                            if is_groq_fb and rotate_groq_key():
                                 print(f"[Groq Fallback] Retry delay {delay:.1f}s too high — rotated key, retrying...")
                                 fallback_llm = get_fallback_llm()
                                 continue
-                            if delay <= 15.0:
-                                print(f"[Groq Fallback Rate Limit] Delay {delay:.1f}s is high but no backup key. Waiting and retrying...")
+                            if delay <= 60.0:
+                                print(f"[{fallback_name} Fallback Rate Limit] Delay {delay:.1f}s is high but no backup key. Waiting and retrying...")
                                 time.sleep(delay)
                                 continue
-                            print(f"[Groq Fallback] Retry delay {delay:.1f}s too high — aborting.")
+                            print(f"[{fallback_name} Fallback] Retry delay {delay:.1f}s too high — aborting.")
                             break
-                        print(f"[Groq Fallback Rate Limit] Waiting {delay:.1f}s (attempt {fb_attempt + 1}/{max_attempts})...")
+                        print(f"[{fallback_name} Fallback Rate Limit] Waiting {delay:.1f}s (attempt {fb_attempt + 1}/{max_attempts})...")
                         time.sleep(delay)
                         continue
 
-                    print(f"[Groq Fallback] Error (attempt {fb_attempt + 1}): {fallback_err}")
+                    print(f"[{fallback_name} Fallback] Error (attempt {fb_attempt + 1}): {fallback_err}")
                     break
         else:
-            print("[Fallback] No Groq API key configured — cannot fall back.")
+            print("[Fallback] No fallback LLM configured.")
 
     # ── Step 3: Parse response ───────────────────────────────────────────────
     if res is None:
