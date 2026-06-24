@@ -202,7 +202,7 @@ def write_cta_for_lead_magnet(magnet_title: str, platform: str) -> list:
 
 
 @tool
-def capture_lead(username: str, platform: str, interest: str) -> str:
+def capture_lead(username: str, platform: str, interest: str, post_url: str = None) -> str:
     """
     Save a lead to memory.
     """
@@ -210,7 +210,8 @@ def capture_lead(username: str, platform: str, interest: str) -> str:
     lead = {
         "username": username,
         "platform": platform,
-        "interest": interest
+        "interest": interest,
+        "post_url": post_url
     }
 
     LEADS.append(lead)

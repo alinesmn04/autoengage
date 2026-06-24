@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "TechFlow AI",
+    "name": "autoengage",
     "niche": "AI automation for small businesses",
     "tone": "Professional but friendly",
     "target_audience": "Small business owners and entrepreneurs",
@@ -10,22 +10,10 @@
       "limited time"
     ],
     "cta_default": "Comment GUIDE for our free automation guide",
-    "website": "https://techflow.example.com"
+    "website": "www.galildevs.com"
   },
-  "leads": [
-    {
-      "username": "user_4786",
-      "platform": "Reddit",
-      "interest": "Requested Guide: Solopreneurs: What AI automati"
-    }
-  ],
-  "conversations": [
-    {
-      "lead_name": "user_4786",
-      "message": "Here are a few options, choose the one that best fits the specific post topic:\n\n---\n\n**Option 1 (Focus on specific interest)**\n\nHi user_4786,\n\nThanks so much for your positive comment on our recent post about [**briefly mention the topic of the post, e.g., 'optimizing sales funnels' or 'content strategy tips'**]! We really appreciate you engaging with our content.\n\nYour comment indicated you found it helpful, and I wanted to reach out personally to see if you had any specific questions or if there's anything particular you're focusing on in that area right now.\n\nNo pressure at all, but if you're looking for more insights, we also have a free resource – our '[**Name of Free Resource, e.g., Ultimate Guide to X**]' – that dives deeper into [**briefly mention what the guide covers**].\n\nWould you be interested in checking that out, or perhaps a quick chat sometime this week to discuss it further?\n\nBest,\n[Your Name/Brand Name]\n\n---\n\n**Option 2 (Slightly more conversational)**\n\nHey user_4786,\n\nJust wanted to say thanks for your positive comment on our post about [**mention the general topic, e.g., 'boosting productivity' or 'design trends'**]! It's great to see you found it useful.\n\nI noticed your engagement and thought I'd reach out personally to see if you had any follow-up questions or if there's anything specific you're trying to achieve in that area.\n\nWe've actually put together a free '[**Name of Free Resource**]' that expands on some of those ideas – it's packed with [**mention a key benefit, e.g., 'actionable tips' or 'case studies'**].\n\nHappy to send it over, or if you prefer, we could set up a quick 10-minute chat to explore your needs. Let me know what works best!\n\nCheers,\n[Your Name/Brand Name]\n\n---\n\n**Remember to replace the bracketed information `[ ]` with your specific details!**",
-      "status": "Sent"
-    }
-  ],
+  "leads": [],
+  "conversations": [],
   "voice_samples": [
     {
       "text": "Hello, I'm AutoEngage — an autonomous marketing AI agent. I can discover viral content, create comments and posts, perform QA checks, generate lead magnets, analyze engagement, and maintain a human writing style.",
@@ -42,115 +30,93 @@
     {
       "text": "שלום, אני AutoEngage, סוכן שיווק אוטונומי. אני יכול לסייע בגילוי תוכן ויראלי, יצירת תגובות ופוסטים, ביצוע בדיקות איכות, יצירת מגנטים, ניתוח התעניינות ושמירה על סגנון כתיבה אנושי.",
       "category": "introduction"
+    },
+    {
+      "text": "Test voice",
+      "category": "Educational"
+    },
+    {
+      "text": "Hello, I can assist with various digital marketing tasks such as lead generation, creating social media posts, drafting comments, and more. I can also provide insights and recommendations based on analytics. What specific task do you need help with?",
+      "category": "introduction"
+    },
+    {
+      "text": "Hello, I can assist with various digital marketing tasks such as lead generation, creating social media posts, drafting comments, and more. I can also provide insights and recommendations based on analytics and help with SEO optimization. What specific task do you need help with?",
+      "category": "introduction"
+    },
+    {
+      "text": "Hello, I can assist with various digital marketing tasks such as generating post ideas, creating social media posts, suggesting visual ideas, drafting comments, and more. I can also help with lead generation, SEO analysis, and competitor research. What specific task do you need help with?",
+      "category": "introduction"
+    },
+    {
+      "text": "Hello, I can assist with various digital marketing tasks such as lead generation, creating social media posts, drafting comments, and more. I can also provide insights and recommendations based on analytics and help with SEO optimization. What specific task do you need help with?",
+      "category": "introduction"
+    },
+    {
+      "text": "Hello, I'm a digital marketing expert and CMO. I can help with lead generation, marketing strategies, SEO optimization, and more. How can I assist you today?",
+      "category": "introduction"
+    },
+    {
+      "text": "היי, אני מומחה שיווק דיגיטלי, אסטרטג בכיר (CMO) וצייד לידים. אני יכול לעזור לך במגוון רחב של נושאים, כולל חיפוש לידים, ייעוץ שיווקי, כתיבת קופי, ועוד.",
+      "category": "introduction"
+    },
+    {
+      "text": "היי, אני מומחה שיווק דיגיטלי. אני יכול לעזור לך במגוון רחב של נושאים, מחיפוש לקוחות פוטנציאליים, דרך ייעוץ שיווקי, ועד ליצירת תוכן מקצועי ואפקטיבי. איך אני יכול לעזור לך היום?",
+      "category": "introduction"
     }
   ],
   "campaigns": [
     {
-      "id": "camp_20742",
-      "name": "אוטומצית crm ברדיט",
+      "id": "camp_621136",
+      "name": "web",
       "platform": "Reddit",
-      "query": "automation",
-      "subreddit": "solopreneur",
-      "status": "Paused",
-      "posts_scanned": 5,
-      "comments_posted": 1,
-      "leads_captured": 0,
-      "logs": [
-        "[2026-06-14 10:12:38] 🔍 Searching for posts on Reddit with query: 'automation'",
-        "[2026-06-14 10:12:38] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 14:36:05] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 14:36:05] ℹ️ Post relevance too low, skipping.",
-        "[2026-06-07 14:36:05] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
-        "[2026-06-07 14:36:05] ⚡ Scoring relevance for post...",
-        "[2026-06-07 14:36:05] 📖 Reading post content: 'Example post about automation' by Anonymous",
-        "[2026-06-07 14:36:05] 📋 Found 1 posts. Processing first relevant post...",
-        "[2026-06-07 14:36:05] 🔍 Searching for posts on Reddit with query: 'automation'",
-        "[2026-06-07 14:36:05] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 03:21:19] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 03:21:19] ℹ️ Post relevance too low, skipping.",
-        "[2026-06-07 03:21:19] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
-        "[2026-06-07 03:21:19] ⚡ Scoring relevance for post...",
-        "[2026-06-07 03:21:19] 📖 Reading post content: 'Example post about automation' by Anonymous",
-        "[2026-06-07 03:21:19] 📋 Found 1 posts. Processing first relevant post...",
-        "[2026-06-07 03:21:19] 🔍 Searching for posts on Reddit with query: 'automation'",
-        "[2026-06-07 03:21:19] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 03:03:03] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 03:03:03] 🎉 Comment successfully published! Text: 'Great insights! Streamlining operations and automation can really help scale bus...'",
-        "[2026-06-07 03:03:03] 📤 Posting comment to reddit...",
-        "[2026-06-07 03:03:03] ✅ QA Score: 94/100. (AI Smell: 2/10, Length: 177 chars)",
-        "[2026-06-07 03:03:03] 🛡️ Performing QA checks on drafted comment...",
-        "[2026-06-07 03:03:03] ✍️ Drafting valuable comment...",
-        "[2026-06-07 03:03:03] 📊 Relevance score: 100/100 - 100/100\nExplanation: The post is highly relevant to the niche.",
-        "[2026-06-07 03:03:03] ⚡ Scoring relevance for post...",
-        "[2026-06-07 03:03:03] 📖 Reading post content: 'AI automation for agencies' by Anonymous",
-        "[2026-06-07 03:03:03] 📋 Found 1 posts. Processing first relevant post...",
-        "[2026-06-07 03:03:03] 🔍 Searching for posts on Reddit with query: 'automation'",
-        "[2026-06-07 03:03:03] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 03:02:24] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 03:02:24] ℹ️ Post relevance too low, skipping.",
-        "[2026-06-07 03:02:24] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
-        "[2026-06-07 03:02:24] ⚡ Scoring relevance for post...",
-        "[2026-06-07 03:02:24] 📖 Reading post content: 'Example post about automation' by Anonymous",
-        "[2026-06-07 03:02:24] 📋 Found 1 posts. Processing first relevant post...",
-        "[2026-06-07 03:02:24] 🔍 Searching for posts on Reddit with query: 'automation'",
-        "[2026-06-07 03:02:24] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 02:50:03] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 02:50:03] ℹ️ Post relevance too low, skipping.",
-        "[2026-06-07 02:50:03] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
-        "[2026-06-07 02:50:03] ⚡ Scoring relevance for post...",
-        "[2026-06-07 02:50:03] 📖 Reading post content: 'Example post about למשל: make CRM bottleneck or automate CRM' by Anonymous",
-        "[2026-06-07 02:50:03] 📋 Found 1 posts. Processing first relevant post...",
-        "[2026-06-07 02:50:03] 🔍 Searching for posts on Reddit with query: 'למשל: make CRM bottleneck or automate CRM'",
-        "[2026-06-07 02:50:03] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 00:15] 📌 Campaign created successfully."
-      ]
-    },
-    {
-      "id": "camp_163384",
-      "name": "גיוס לידים לאוטומציה",
-      "platform": "Reddit",
-      "query": "AI automation for small businesses",
+      "query": "need a website",
       "subreddit": "solopreneur",
       "status": "Active",
-      "posts_scanned": 4,
+      "posts_scanned": 2,
       "comments_posted": 1,
       "leads_captured": 1,
       "logs": [
-        "[2026-06-07 14:38:08] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 14:38:08] ℹ️ Post relevance too low, skipping.",
-        "[2026-06-07 14:38:08] 📊 Relevance score: 40/100 - 40/100\nExplanation: The post is somewhat relevant to the niche.",
-        "[2026-06-07 14:38:08] ⚡ Scoring relevance for post...",
-        "[2026-06-07 14:38:08] 📖 Reading post content: 'Beyond ChatGPT: How are you implementing AI for specific business processes (marketing, content, admin)?' by Anonymous",
-        "[2026-06-07 14:38:08] 📬 Outreach DM automatically tracked and sent to @user_4786!",
-        "[2026-06-07 14:38:08] ✉️ Drafting personalized direct message (DM) outreach to @user_4786...",
-        "[2026-06-07 14:38:08] 🎯 Engagement detected! User @user_4786 liked/replied to the comment.",
-        "[2026-06-07 14:38:08] 🎉 Comment successfully published! Text: 'This is a fantastic question! It's a constant balancing act for solopreneurs loo...'",
-        "[2026-06-07 14:38:08] 📤 Posting comment to reddit...",
-        "[2026-06-07 14:38:08] ✅ QA Score: 76/100. (AI Smell: 8/10, Length: 831 chars)",
-        "[2026-06-07 14:38:08] 🛡️ Performing QA checks on drafted comment...",
-        "[2026-06-07 14:38:08] ✍️ Drafting valuable comment...",
-        "[2026-06-07 14:38:08] 📊 Relevance score: 60/100 - 60/100\nExplanation: The post is somewhat relevant to the niche.",
-        "[2026-06-07 14:38:08] ⚡ Scoring relevance for post...",
-        "[2026-06-07 14:38:08] 📖 Reading post content: 'Solopreneurs: What AI automation tools are you ACTUALLY using to save time daily?' by Anonymous",
-        "[2026-06-07 14:38:08] 📋 Found 3 posts. Processing first relevant post...",
-        "[2026-06-07 14:38:08] 🔍 Searching for posts on Reddit with query: 'AI automation for small businesses'",
-        "[2026-06-07 14:38:08] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 14:36:50] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 14:36:50] ℹ️ Post relevance too low, skipping.",
-        "[2026-06-07 14:36:50] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
-        "[2026-06-07 14:36:50] ⚡ Scoring relevance for post...",
-        "[2026-06-07 14:36:50] 📖 Reading post content: 'Example post about AI automation for small businesses' by Anonymous",
-        "[2026-06-07 14:36:50] 📋 Found 1 posts. Processing first relevant post...",
-        "[2026-06-07 14:36:50] 🔍 Searching for posts on Reddit with query: 'AI automation for small businesses'",
-        "[2026-06-07 14:36:50] 🚀 Starting campaign execution cycle...",
-        "[2026-06-07 14:36:30] 🏁 Campaign execution cycle finished.",
-        "[2026-06-07 14:36:30] ℹ️ Post relevance too low, skipping.",
-        "[2026-06-07 14:36:30] 📊 Relevance score: 0/100 - 0/100\nExplanation: The post is not very relevant to the niche.",
-        "[2026-06-07 14:36:30] ⚡ Scoring relevance for post...",
-        "[2026-06-07 14:36:30] 📖 Reading post content: 'Example post about AI automation for small businesses' by Anonymous",
-        "[2026-06-07 14:36:30] 📋 Found 1 posts. Processing first relevant post...",
-        "[2026-06-07 14:36:30] 🔍 Searching for posts on Reddit with query: 'AI automation for small businesses'",
-        "[2026-06-07 14:36:30] 🚀 Starting campaign execution cycle...",
+        "[2026-06-24 17:24:13] 🏁 Campaign execution cycle finished.",
+        "[2026-06-24 17:24:13] ℹ️ Post relevance too low, skipping.",
+        "[2026-06-24 17:24:13] 📊 Relevance score: 20/100 - 20/100\nExplanation: The post is not very relevant to the niche.",
+        "[2026-06-24 17:24:13] ⚡ Scoring relevance for post...",
+        "[2026-06-24 17:24:13] 📖 Reading post content: 'Need a quick portfolio website without hiring a developer or using WordPress' by Anonymous",
+        "[2026-06-24 17:24:13] 📬 Outreach DM automatically tracked and sent to @user_3329!",
+        "[2026-06-24 17:24:13] ✉️ Drafting personalized direct message (DM) outreach to @user_3329...",
+        "[2026-06-24 17:24:13] 🎯 Engagement detected! User @user_3329 liked/replied to the comment.",
+        "[2026-06-24 17:24:13] 🎉 Comment successfully published! Text: '\"Congratulations on reaching this milestone, your hard work and dedication are t...'",
+        "[2026-06-24 17:24:13] 📤 Posting comment to reddit...",
+        "[2026-06-24 17:24:13] ✅ QA Score: 94/100. (AI Smell: 2/10, Length: 324 chars)",
+        "[2026-06-24 17:24:13] 🛡️ Performing QA checks on drafted comment...",
+        "[2026-06-24 17:24:13] ✍️ Drafting valuable comment...",
+        "[2026-06-24 17:24:13] 📊 Relevance score: 60/100 - 60/100\nExplanation: The post is somewhat relevant to the niche.",
+        "[2026-06-24 17:24:13] ⚡ Scoring relevance for post...",
+        "[2026-06-24 17:24:13] 📖 Reading post content: 'I built a website/app and really need some feedback on its function and overall look' by Anonymous",
+        "[2026-06-24 17:24:13] 📋 Found 3 posts. Processing first relevant post...",
+        "[2026-06-24 17:24:13] 🔍 Searching Google for Reddit posts with query/route: 'need a website'",
+        "[2026-06-24 17:24:13] 🚀 Starting campaign execution cycle...",
+        "[2026-06-07 01:30] 📌 Campaign created successfully."
+      ]
+    },
+    {
+      "id": "camp_694622",
+      "name": "בניית אתר",
+      "platform": "LinkedIn",
+      "query": "\"היי אני רוצה לבנות אתר\"",
+      "subreddit": "",
+      "status": "Active",
+      "posts_scanned": 1,
+      "comments_posted": 0,
+      "leads_captured": 0,
+      "logs": [
+        "[2026-06-24 22:56:05] 🏁 Campaign execution cycle finished.",
+        "[2026-06-24 22:56:05] ℹ️ Post relevance too low, skipping.",
+        "[2026-06-24 22:56:05] 📊 Relevance score: 40/100 - 40/100\nExplanation: The post is somewhat relevant to the niche.",
+        "[2026-06-24 22:56:05] ⚡ Scoring relevance for post...",
+        "[2026-06-24 22:56:05] 📖 Reading post content: 'LinkedIn Search Error' by System",
+        "[2026-06-24 22:56:05] 📋 Found 1 posts. Processing first relevant post...",
+        "[2026-06-24 22:56:05] 🔍 Searching Google for LinkedIn posts with query/route: '\"היי אני רוצה לבנות אתר\"'",
+        "[2026-06-24 22:56:05] 🚀 Starting campaign execution cycle...",
         "[2026-06-07 01:30] 📌 Campaign created successfully."
       ]
     }

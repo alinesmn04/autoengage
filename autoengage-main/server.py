@@ -127,6 +127,7 @@ class CaptureLeadRequest(BaseModel):
     username: str
     platform: str
     interest: str
+    post_url: Optional[str] = None
 
 class CompetitorAdsRequest(BaseModel):
     competitor_name: str
@@ -155,6 +156,18 @@ class VoiceSampleRequest(BaseModel):
 class FindVoiceRequest(BaseModel):
     query: str
     category: str
+class SeoAuditRequest(BaseModel):
+    url: str
+    keywords: str
+
+class CompetitorSpyRequest(BaseModel):
+    competitor_url: str
+    competitor_name: str
+
+class ABTestRequest(BaseModel):
+    base_topic: str
+    audience: str
+    platform: str
 
 class RedditSearchRequest(BaseModel):
     subreddit: str
@@ -207,6 +220,7 @@ def chat_with_agent(request: ChatRequest):
         messages.append(HumanMessage(content=request.message[:2000]))  # cap user message
         
         executed_tool_logs = []
+        last_raw_tool_res = None
         
         # Max 5 iterations to stay within token budget
         for iteration in range(5):
@@ -251,6 +265,8 @@ def chat_with_agent(request: ChatRequest):
                 else:
                     t_res = f"Tool {t_name} not found."
                 
+                last_raw_tool_res = t_res
+                
                 # Token budget: truncate tool results to prevent context explosion
                 t_res_str = str(t_res)[:500]
                 if len(str(t_res)) > 500:
@@ -278,8 +294,11 @@ def chat_with_agent(request: ChatRequest):
         else:
             cleaned_response = str(cleaned_response)
 
-        if not cleaned_response.strip():
-            cleaned_response = "בוצעה הפעולה בהצלחה."
+        if not cleaned_response.strip() or cleaned_response.strip() == "בוצעה הפעולה בהצלחה.":
+            if last_raw_tool_res:
+                cleaned_response = f"הפעולה בוצעה בהצלחה. להלן התוצאה:\n\n{last_raw_tool_res}"
+            else:
+                cleaned_response = "בוצעה הפעולה בהצלחה."
 
         return {
             "response": cleaned_response,
@@ -412,16 +431,33 @@ def download_pdf(filename: str):
 
 @app.get("/api/leads")
 def get_leads():
-    return LEADS
+    import persistence
+    return persistence.LEADS
+
+@app.delete("/api/leads")
+def delete_all_leads():
+    import persistence
+    persistence.LEADS.clear()
+    persistence.save_all()
+    return {"status": "success"}
+
+@app.delete("/api/leads/{lead_id}")
+def delete_lead(lead_id: str):
+    import persistence
+    persistence.LEADS[:] = [l for l in persistence.LEADS if str(l.get("id")) != lead_id and str(l.get("username")) != lead_id]
+    persistence.save_all()
+    return {"status": "success"}
 
 @app.post("/api/tools/capture-lead")
 def save_lead(request: CaptureLeadRequest):
     res = capture_lead.invoke({
         "username": request.username,
         "platform": request.platform,
-        "interest": request.interest
+        "interest": request.interest,
+        "post_url": request.post_url
     })
-    return {"result": res, "leads": LEADS}
+    import persistence
+    return {"result": res, "leads": persistence.LEADS}
 
 # 5. Competitor Ads & Outreach
 @app.post("/api/tools/research-ads")
@@ -456,6 +492,20 @@ def create_dm(request: DraftDmRequest):
 def get_conversations():
     return CONVERSATIONS
 
+@app.delete("/api/conversations")
+def delete_all_conversations():
+    import persistence
+    persistence.CONVERSATIONS.clear()
+    persistence.save_all()
+    return {"status": "success"}
+
+@app.delete("/api/conversations/{lead_name}")
+def delete_conversation(lead_name: str):
+    import persistence
+    persistence.CONVERSATIONS[:] = [c for c in persistence.CONVERSATIONS if str(c.get("lead_name")) != lead_name]
+    persistence.save_all()
+    return {"status": "success"}
+
 @app.post("/api/tools/track-conversation")
 def save_conversation(request: TrackConversationRequest):
     res = track_conversation.invoke({
@@ -485,6 +535,104 @@ def search_similar_voice(request: FindVoiceRequest):
         "category": request.category
     })
     return {"result": res}
+
+# --- Enterprise Endpoints ---
+@app.post("/api/enterprise/seo-audit")
+def enterprise_seo_audit(request: SeoAuditRequest):
+    from enterprise_seo import scan_website_seo, analyze_seo_gaps, generate_remediated_html, calculate_seo_score
+    import json
+    
+    # 1. Scan website
+    scan_result_str = scan_website_seo.invoke(request.url)
+    if scan_result_str.startswith("Error"):
+        raise HTTPException(status_code=400, detail=scan_result_str)
+        
+    try:
+        scan_data = json.loads(scan_result_str)
+    except:
+        scan_data = {"raw": scan_result_str}
+        
+    # 2. Analyze gaps
+    gaps_result = analyze_seo_gaps.invoke({"current_seo_data": scan_result_str, "target_keywords": request.keywords})
+    
+    # 3. Calculate scores
+    scores_str = calculate_seo_score.invoke(scan_result_str)
+    try:
+        # Strip markdown json block if LLM returned it
+        scores_str = scores_str.replace("```json", "").replace("```", "").strip()
+        scores = json.loads(scores_str)
+    except:
+        scores = {"overall": 0, "keywords": 0, "meta": 0, "structure": 0}
+        
+    # 4. Generate HTML
+    html_result = generate_remediated_html.invoke({"url": request.url, "seo_gaps": gaps_result})
+    
+    return {
+        "scan_data": scan_data,
+        "gaps": gaps_result,
+        "html": html_result,
+        "scores": scores
+    }
+
+@app.post("/api/enterprise/spy")
+def enterprise_spy(request: CompetitorSpyRequest):
+    from enterprise_spy import monitor_competitor_website, extract_competitor_strategy, generate_counter_campaign
+    import json
+    
+    # 1. Scrape competitor
+    scrape_result_str = monitor_competitor_website.invoke(request.competitor_url)
+    if scrape_result_str.startswith("Error"):
+        raise HTTPException(status_code=400, detail=scrape_result_str)
+        
+    try:
+        scrape_data = json.loads(scrape_result_str)
+    except:
+        scrape_data = {"raw": scrape_result_str}
+        
+    # 2. Extract strategy & weaknesses
+    strategy_result = extract_competitor_strategy.invoke(scrape_result_str)
+    
+    # 3. Generate counter campaign
+    campaign_result = generate_counter_campaign.invoke({
+        "competitor_name": request.competitor_name,
+        "findings": strategy_result
+    })
+    
+    return {
+        "scrape_data": scrape_data,
+        "strategy": strategy_result,
+        "campaign": campaign_result
+    }
+
+@app.post("/api/enterprise/ab-test")
+def enterprise_ab_test(request: ABTestRequest):
+    from enterprise_ab_testing import generate_ab_variations, predict_ab_performance
+    import json
+    
+    # 1. Generate variations
+    variations_str = generate_ab_variations.invoke({
+        "base_topic": request.base_topic,
+        "audience": request.audience,
+        "platform": request.platform
+    })
+    
+    # 2. Predict performance
+    predictions_str = predict_ab_performance.invoke(variations_str)
+    
+    try:
+        variations = json.loads(variations_str.replace("```json", "").replace("```", "").strip())
+    except:
+        variations = []
+        
+    try:
+        predictions = json.loads(predictions_str.replace("```json", "").replace("```", "").strip())
+    except:
+        predictions = []
+        
+    return {
+        "variations": variations,
+        "predictions": predictions
+    }
 
 # 7. Platform Specifics
 @app.post("/api/tools/reddit-search")
@@ -541,6 +689,28 @@ def create_campaign(request: CampaignCreateRequest):
     save_all()
     return {"message": "Campaign created", "campaign": new_campaign}
 
+class CampaignUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    platform: Optional[str] = None
+    query: Optional[str] = None
+    subreddit: Optional[str] = None
+
+@app.put("/api/campaigns/{id}")
+def update_campaign(id: str, request: CampaignUpdateRequest):
+    for camp in CAMPAIGNS:
+        if camp["id"] == id:
+            if request.name is not None:
+                camp["name"] = request.name
+            if request.platform is not None:
+                camp["platform"] = request.platform
+            if request.query is not None:
+                camp["query"] = request.query
+            if request.subreddit is not None:
+                camp["subreddit"] = request.subreddit
+            save_all()
+            return {"message": "Campaign updated successfully", "campaign": camp}
+    raise HTTPException(status_code=404, detail="Campaign not found")
+
 @app.post("/api/campaigns/{id}/toggle")
 def toggle_campaign(id: str):
     for camp in CAMPAIGNS:
@@ -571,7 +741,8 @@ def trigger_campaign_cycle(id: str):
 # 9. Dashboard Statistics Summary
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats():
-    total_leads = len(LEADS)
+    import persistence
+    total_leads = len(persistence.LEADS)
     active_camps = sum(1 for c in CAMPAIGNS if c.get("status") == "Active")
     total_dms = len(CONVERSATIONS)
     
@@ -580,7 +751,7 @@ def get_dashboard_stats():
     
     # Calculate platforms breakdown
     platform_counts = {}
-    for l in LEADS:
+    for l in persistence.LEADS:
         p = l.get("platform", "Unknown")
         platform_counts[p] = platform_counts.get(p, 0) + 1
         
@@ -620,7 +791,7 @@ def run_campaign_cycle(campaign: dict):
     query = campaign.get("query", "automation")
     subreddit = campaign.get("subreddit") or "solopreneur"
     
-    campaign["logs"].insert(0, f"[{now_str}] 🔍 Searching for posts on {campaign['platform']} with query: '{query}'")
+    campaign["logs"].insert(0, f"[{now_str}] 🔍 Searching Google for {campaign['platform']} posts with query/route: '{query}'")
     
     posts = []
     try:
@@ -644,10 +815,10 @@ def run_campaign_cycle(campaign: dict):
         
     campaign["logs"].insert(0, f"[{now_str}] 📋 Found {len(posts)} posts. Processing first relevant post...")
     
-    # Process up to 2 posts per cycle
     for post in posts[:2]:
         title = post.get("title", "Unknown Post")
-        url = post.get("url", "https://example.com/post")
+        default_url = f"https://www.reddit.com/r/{subreddit}/" if platform == "reddit" else "https://www.linkedin.com/feed/"
+        url = post.get("url") or default_url
         author = post.get("author", post.get("from_user", "Anonymous"))
         
         campaign["posts_scanned"] += 1
@@ -674,6 +845,22 @@ def run_campaign_cycle(campaign: dict):
             
         campaign["logs"].insert(0, f"[{now_str}] 📊 Relevance score: {score_val}/100 - {rel_score_str.replace('Score:', '').strip()}")
         
+        # Unconditionally capture every scanned post to the Leads Center so the user sees everything
+        import uuid
+        try:
+            from persistence import LEADS
+            LEADS.append({
+                "id": str(uuid.uuid4()),
+                "username": author,
+                "platform": "LinkedIn" if platform == "linkedin" else "Reddit",
+                "interest": f"Post: {title[:40]}...",
+                "post_url": url,
+                "score": score_val
+            })
+            save_all()
+        except Exception as e:
+            print("Failed to save unconditionally captured lead", e)
+            
         if score_val >= 50:
             campaign["logs"].insert(0, f"[{now_str}] ✍️ Drafting valuable comment...")
             brand_tone = BRAND.get("tone", "Professional but friendly")
@@ -727,8 +914,9 @@ def run_campaign_cycle(campaign: dict):
                     # Capture lead
                     capture_lead.invoke({
                         "username": lead_user,
-                        "platform": platform.capitalize(),
-                        "interest": f"Requested Guide: {title[:30]}"
+                        "platform": "LinkedIn" if platform == "linkedin" else platform.capitalize(),
+                        "interest": f"Requested Guide: {title[:30]}",
+                        "post_url": url
                     })
                     campaign["leads_captured"] += 1
                     

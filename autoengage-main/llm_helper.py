@@ -8,12 +8,12 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 # Load env variables robustly
 current_dir = Path(__file__).parent.resolve()
-load_dotenv(current_dir / ".env")
+load_dotenv(current_dir / ".env", override=True)
 
 # ──────────────────────────────────────────────
 # Groq API Key Rotation
 # ──────────────────────────────────────────────
-GROQ_KEYS = [k for k in [os.getenv("GROQ_API_KEY"), os.getenv("GROQ_API_KEY_BACKUP")] if k]
+GROQ_KEYS = [k for k in [os.getenv("GROQ_API_KEY"), os.getenv("GROQ_API_KEY_BACKUP"), os.getenv("GROQ_API_KEY_BACKUP2")] if k]
 current_groq_key_index = 0
 
 def get_groq_api_key():
@@ -66,6 +66,12 @@ def get_fallback_llm(temperature=0.7):
             provider = "gemini"
 
     if provider == "gemini":
+        if get_groq_api_key():
+            try:
+                return _get_groq_llm(temperature=temperature)
+            except Exception as e:
+                print(f"[Fallback] Error creating Groq LLM: {e}")
+    elif provider == "openai":
         if get_groq_api_key():
             try:
                 return _get_groq_llm(temperature=temperature)
@@ -161,10 +167,14 @@ def _is_rate_limit_error(err_str: str) -> bool:
     ])
 
 def _is_token_error(err_str: str) -> bool:
-    """Detect context window / token limit errors."""
+    # Exclude rate limit errors that happen to have the word "tokens" in them (like TPD limits)
+    if "rate limit reached" in err_str or "rate_limit_exceeded" in err_str:
+        return False
     return any(k in err_str for k in [
-        "context window", "token", "maximum context length",
-        "too long", "content too large", "string too long"
+        "maximum context length",
+        "too many tokens",
+        "tokens limit",
+        "token limit exceeded"
     ])
 
 def _extract_retry_delay(err_str: str, attempt: int, default_step: float = 5.0) -> float:
@@ -231,6 +241,9 @@ def generate_text(system_prompt: str, user_prompt: str) -> str:
             if _is_rate_limit_error(err_str) and attempt < max_attempts - 1:
                 delay = _extract_retry_delay(err_str, attempt)
                 if delay > 8.0:
+                    if rotate_groq_key():
+                        print(f"[Primary LLM Rate Limit] Delay {delay:.1f}s is high. Rotated Groq API key! Retrying immediately...")
+                        continue
                     print(f"[Primary LLM Rate Limit] Retry delay {delay:.1f}s is too high — switching to fallback.")
                     break
                 print(f"[Primary LLM Rate Limit] Waiting {delay:.1f}s before retry {attempt + 1}/{max_attempts}...")

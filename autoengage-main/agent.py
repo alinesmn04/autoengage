@@ -42,6 +42,10 @@ from qa_tools import *
 from voice_store import *
 from platform_reddit import *
 from platform_linkedin import *
+from platform_facebook import *
+from enterprise_seo import scan_website_seo, analyze_seo_gaps, generate_remediated_html, calculate_seo_score
+from enterprise_spy import monitor_competitor_website, extract_competitor_strategy, generate_counter_campaign
+from enterprise_ab_testing import generate_ab_variations, predict_ab_performance
 
 # Create model based on configured provider
 provider = os.getenv("LLM_PROVIDER")
@@ -96,12 +100,13 @@ elif provider == "groq":
     )
 elif provider == "openai":
     api_base = os.getenv("OPENAI_API_BASE")
+    openai_model = os.getenv("OPENAI_MODEL", "nvidia/llama-3.1-nemotron-70b-instruct")
     client_kwargs = {}
     if api_base:
         client_kwargs["openai_api_base"] = api_base
         
     llm = ChatOpenAI(
-        model="gpt-4o-mini",
+        model=openai_model,
         temperature=0,
         max_retries=0,
         **client_kwargs
@@ -155,7 +160,22 @@ TOOLS = [
 
     linkedin_search_posts,
     linkedin_read_post,
-    linkedin_post_comment
+    linkedin_post_comment,
+    facebook_search_posts,
+    facebook_read_post,
+    facebook_post_comment,
+
+    scan_website_seo,
+    analyze_seo_gaps,
+    generate_remediated_html,
+    calculate_seo_score,
+
+    monitor_competitor_website,
+    extract_competitor_strategy,
+    generate_counter_campaign,
+
+    generate_ab_variations,
+    predict_ab_performance
 ]
 
 def get_groq_bound_llm(temperature=0):
@@ -204,6 +224,8 @@ def get_gemini_bound_llm(temperature=0):
 # Setup fallback LLM based on provider
 bound_fallback_llm = None
 if provider == "gemini" and get_groq_api_key():
+    bound_fallback_llm = get_groq_bound_llm()
+elif provider == "openai" and get_groq_api_key():
     bound_fallback_llm = get_groq_bound_llm()
 elif provider == "groq" and os.getenv("GEMINI_API_KEY"):
     bound_fallback_llm = get_gemini_bound_llm()
@@ -373,9 +395,30 @@ llm_with_tools = RetryingLLM(bound_llm, bound_fallback_llm)
 # (Groq as primary caused Pydantic schema errors with complex tool definitions)
 chat_llm_with_tools = llm_with_tools
 
-SYSTEM_PROMPT = """You are AutoEngage, an autonomous marketing AI agent.
-Tools: discover viral content, draft comments, QA checks, lead magnets, analytics, DMs.
-Rules: reply in the user's language. Always add value. Never use forbidden phrases. QA before posting."""
+SYSTEM_PROMPT = """תפקיד וזהות:
+אתה מומחה שיווק דיגיטלי, אסטרטג בכיר (CMO) וצייד לידים. אתה מתפקד כליבת האינטליגנציה של פלטפורמת שיווק אוטונומית מתקדמת. המטרה שלך היא לא רק לענות על שאלות, אלא לייצר למשתמשים תוצאות פרקטיות, לבנות אסטרטגיות ולהגדיל את ההכנסות שלהם.
+
+יכולות הליבה שלך (כלים שעומדים לרשותך):
+
+1. צייד לידים (Lead Generation):
+כאשר המשתמש מחפש לקוחות פוטנציאליים, עליך להפעיל את פונקציית חיפוש הלידים. שאל תמיד שאלות מיקוד לפני החיפוש במידת הצורך (תעשייה, מיקום, גודל חברה, קהל יעד). לאחר מציאת הלידים, אל תזרוק רק רשימה – הצע דרך פעולה (למשל: נסח הודעת פנייה קרה ראשונית ללידים אלו).
+
+2. מומחה הדרכות ומתודולוגיה (PDF Knowledge Base):
+יש לך גישה למסמכי הדרכה שיווקיים (PDFs) המכילים את שיטות העבודה הטובות ביותר. כאשר משתמש שואל איך לבצע פעולה שיווקית (למשל "איך לכתוב קופי לפייסבוק" או "איך לטייב יחסי המרה"), עליך לשלוף את המידע מתוך ה-PDF ולהנגיש אותו כתוכנית פעולה מסודרת של צעד-אחר-צעד, ולא כטקסט אקדמי וארוך.
+
+3. ייעוץ וקופירייטינג שיווקי (Marketing Chat):
+בכל שיחה שאינה חיפוש לידים ישיר או שליפת הדרכה, עליך לשמש כיועץ שיווקי. נתח קמפיינים, הצע רעיונות ל-A/B Testing, עזור בניסוח קופי ממיר (Copywriting), וחשוב תמיד על מונחים של החזר השקעה (ROI), יחס המרה (CRO), ואופטימיזציה (SEO).
+
+חוקי פעולה והתנהגות:
+
+תהיה אקטיבי, לא פסיבי: אל תחכה שהמשתמש יבקש הכל. אם סיפקת רשימת לידים, תשאל: "האם תרצה שאנסח לך אימייל Cold Outreach מותאם אישית עבורם?"
+
+דבר כמו מקצוען: השתמש במונחים מקצועיים (Funnels, CTR, LTV, Churn) אבל הסבר אותם בגובה העיניים אם המשתמש נראה אבוד.
+
+מיקוד בתוצאות (Actionable): כל תשובה שלך חייבת להסתיים בצעד הבא לביצוע. הימנע מתיאוריות שיווקיות ארוכות ללא תכל'ס.
+
+סנכרון בין כלים: שלב בין היכולות שלך. לדוגמה: אם המשתמש מבקש ללמוד על שיווק ב-B2B (מתוך ה-PDF), הצע לו לאחר מכן להריץ חיפוש לידים ראשוני כדי לתרגל את מה שלמד.
+IMPORTANT: When you generate, draft, or create content (like a post, comment, DM, or lead magnet outline), you MUST output the final generated text directly to the user in your final response."""
 
 if __name__ == "__main__":
     print("[Agent] AutoEngage Agent Started")

@@ -28,7 +28,7 @@ def add_voice_sample(text: str, category: str) -> str:
 from typing import Any
 
 @tool
-def find_similar_voice(query: str, category: str, k: Any = 3) -> list:
+def find_similar_voice(query: str, category: str, k: int = 3) -> list:
     """
     Find similar writing samples by category.
     """

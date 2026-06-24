@@ -17,33 +17,62 @@ def search_viral_posts(query: str, max_results: int = 5) -> str:
     Returns a simple list of search result titles and links.
     """
 
-    search_url = f"https://www.google.com/search?q={query}"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+    import urllib.parse
+    from playwright.sync_api import sync_playwright
+
+    search_url = f"https://www.google.com/search?q={urllib.parse.quote_plus(query)}"
 
     try:
-        response = requests.get(search_url, headers=headers, timeout=10)
-        soup = BeautifulSoup(response.text, "html.parser")
+        with sync_playwright() as p:
+            browser = p.firefox.launch(headless=True)
+            context = browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0"
+            )
+            page = context.new_page()
+            
+            page.goto(search_url, wait_until="domcontentloaded", timeout=15000)
+            page.wait_for_timeout(3000)
+            
+            results = []
+            
+            target_domain = ""
+            if "site:" in query:
+                target_domain = query.split("site:")[1].split()[0].replace("www.", "")
+            
+            # Google's search results usually reside in div.g a
+            search_elements = page.locator("div.g a").all()
+            
+            for elem in search_elements:
+                href = elem.get_attribute("href")
+                text = elem.inner_text().strip()
+                if href and href.startswith("http") and "google.com" not in href:
+                    if target_domain and target_domain not in href:
+                        continue
+                    if text and len(text) > 5 and not any(href in r for r in results):
+                        results.append(f"{len(results) + 1}. {text} - {href}")
+                if len(results) >= max_results:
+                    break
+            
+            # Fallback if UI changes or using a different layout
+            if not results:
+                links = page.locator("a").all()
+                for link in links:
+                    href = link.get_attribute("href")
+                    text = link.inner_text().strip()
+                    if href and href.startswith("http") and "google.com" not in href:
+                        if target_domain and target_domain not in href:
+                            continue
+                        if text and len(text) > 10 and not any(href in r for r in results):
+                            results.append(f"{len(results) + 1}. {text} - {href}")
+                    if len(results) >= max_results:
+                        break
 
-        results = []
-        links = soup.find_all("a")
+            browser.close()
 
-        for link in links:
-            href = link.get("href")
-            text = link.get_text().strip()
+            if not results:
+                return "No results found."
 
-            if href and text and href.startswith("/url?q="):
-                clean_link = href.split("/url?q=")[1].split("&")[0]
-                results.append(f"{len(results) + 1}. {text} - {clean_link}")
-
-            if len(results) >= max_results:
-                break
-
-        if not results:
-            return "No results found."
-
-        return f"Found {len(results)} results:\n" + "\n".join(results)
+            return f"Found {len(results)} results:\n" + "\n".join(results)
 
     except Exception as e:
         return f"Error while searching: {str(e)}"

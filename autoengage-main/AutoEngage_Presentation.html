@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoEngage - מצגת תכונות המערכת</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&display=swap');
+        
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --bg: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* Print optimization */
+        @media print {
+            body { background: white; }
+            .page-break { page-break-before: always; }
+            .no-print { display: none; }
+            .container { box-shadow: none !important; margin: 0 !important; width: 100% !important; }
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            background: white;
+            padding: 50px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-radius: 12px;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -1px;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .section-title {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-top: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .feature-card {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-right: 4px solid var(--primary);
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            color: #475569;
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .how-it-works {
+            margin-top: 12px;
+            font-size: 0.95rem;
+            color: #64748b;
+            background: #ffffff;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .btn-print {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-print:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="window.print()" class="btn-print no-print">הדפס / שמור כ-PDF 🖨️</button>
+
+    <div class="container">
+        <div class="header">
+            <h1 class="logo">AutoEngage</h1>
+            <p class="subtitle">סוכן שיווק אוטונומי מבוסס AI - סקירת תכונות ויכולות</p>
+        </div>
+
+        <p style="font-size: 1.15rem; text-align: justify; color: #334155;">
+            מערכת AutoEngage היא סוכן שיווקי חכם ואוטונומי הפועל כעובד שיווק לכל דבר. המערכת מסוגלת לסרוק רשתות חברתיות, לזהות לידים, ליצור אינטראקציה, לכתוב פוסטים מותאמים ולייצר מובילי לידים (Lead Magnets) - הכל בסנכרון מלא עם קול המותג והנחיות העסק.
+        </p>
+
+        <!-- Section 1 -->
+        <h2 class="section-title">1. גילוי ומחקר (Discovery & Analytics)</h2>
+        
+        <div class="feature-card">
+            <h3 class="feature-title">סריקת פוסטים ויראליים</h3>
+            <p class="feature-desc">הסוכן סורק פלטפורמות כמו Reddit ו-LinkedIn ומאתר פוסטים עם פוטנציאל מעורבות גבוה (ויראליות).</p>
+            <div class="how-it-works"><strong>איך זה עובד:</strong> מופעלת שאילתת חיפוש המזהה מילות מפתח (לדוגמה CRM, AI), והסוכן בוחן את כמות הלייקים/תגובות כדי לזהות טרנדים בזמן אמת.</div>
+        </div>
+
+        <div class="feature-card">
+            <h3 class="feature-title">דירוג לידים (Lead Scoring)</h3>
+            <p class="feature-desc">כל משתמש שיוצר אינטראקציה מקבל ציון (Score) שקובע עד כמה הוא "חם" ורלוונטי למותג.</p>
+            <div class="how-it-works"><strong>איך זה עובד:</strong> האלגוריתם מנתח את טקסט התגובה של הליד. שימוש במילים כמו "מדריך" או בקשת עזרה מזכים את הליד בציון "Hot" (חם).</div>
+        </div>
+
+        <!-- Section 2 -->
+        <h2 class="section-title">2. יצירת תוכן אותנטי וניהול מותג</h2>
+
+        <div class="feature-card">
+            <h3 class="feature-title">חיקוי קול המותג (Brand Voice Store)</h3>
+            <p class="feature-desc">המערכת לומדת את סגנון הכתיבה הייחודי של העסק ומייצרת טקסטים שנשמעים אותנטיים ולא כמו בוט.</p>
+            <div class="how-it-works"><strong>איך זה עובד:</strong> המשתמש מזין דגימות טקסט למאגר (לפי קטגוריות: מקצועי, קז'ואל וכו'). לפני כל כתיבה, הסוכן מבצע חיפוש (Vector Search) ושולף את הסגנון הדומה ביותר כדי לשכפל אותו.</div>
+        </div>
+
+        <div class="feature-card">
+            <h3 class="feature-title">כתיבת פוסטים ו-A/B Testing</h3>
+            <p class="feature-desc">הסוכן מייצר רעיונות, מנסח פוסטים (כמו Case Studies) ואפילו מציע גרסאות שונות לבדיקה (A/B Test).</p>
+            <div class="how-it-works"><strong>איך זה עובד:</strong> ה-AI מנתח את ערכי המותג וקהל היעד, ומשתמש בכללי קופירייטינג כדי לבנות ווים (Hooks) חזקים וקריאה לפעולה מדויקת.</div>
+        </div>
+
+        <div class="page-break"></div>
+
+        <!-- Section 3 -->
+        <h2 class="section-title">3. אוטומציה של מובילי לידים (Lead Magnets)</h2>
+
+        <div class="feature-card">
+            <h3 class="feature-title">סטודיו ליצירת ספרוני PDF</h3>
+            <p class="feature-desc">יצירה בלחיצת כפתור של מדריכים שיווקיים ברמת פרימיום כולל עיצוב, מתווה ותוכן מלא.</p>
+            <div class="how-it-works"><strong>איך זה עובד:</strong> הסוכן מקבל נושא, בונה בעזרת AI מתווה של 5 פרקים עם סיכומים, ואז משתמש בספריית FPDF כדי לעצב, לצבוע (צבעי אינדיגו) ולהדפיס מסמך PDF מוכן להורדה עם לוגו ו-CTA של העסק.</div>
+        </div>
+
+        <!-- Section 4 -->
+        <h2 class="section-title">4. בקרת איכות מחמירה (QA & Safety)</h2>
+
+        <div class="feature-card">
+            <h3 class="feature-title">בדיקת רדאר AI ו"מילות איסור"</h3>
+            <p class="feature-desc">המערכת מוודאת שאף תגובה לא נשמעת מלאכותית מדי ("AI Smell") ולא מכילה מילים אסורות שהוגדרו (כמו "קנה עכשיו").</p>
+            <div class="how-it-works"><strong>איך זה עובד:</strong> לפני אישור פוסט, הסוכן מעביר אותו בשרשרת בקרות (Pipeline). אם זוהתה מילה אסורה או ניסוח רובוטי, הטקסט נכתב מחדש אוטומטית.</div>
+        </div>
+
+        <!-- Section 5 -->
+        <h2 class="section-title">5. פניות אישיות (Outreach DM)</h2>
+
+        <div class="feature-card">
+            <h3 class="feature-title">ניסוח ושליחת הודעות אישיות (DM)</h3>
+            <p class="feature-desc">המערכת מזהה ליד חם, מנסחת לו פנייה מותאמת אישית לתיבת ההודעות, ומתעדת את כל השיחות ביומן.</p>
+            <div class="how-it-works"><strong>איך זה עובד:</strong> נתוני הליד (הפלטפורמה ותחום העניין) מוזנים לפרומפט ייעודי שמנסח הודעת פתיח לא מכירתית מדי, שנועדה ליזום שיחה טבעית ולהציע לו את ה-PDF שהופק קודם לכן.</div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 0.9rem;">
+            מסמך זה הופק אוטומטית עבור מצגת טכנולוגית | AutoEngage System Architecture
+        </div>
+    </div>
+</body>
+</html>

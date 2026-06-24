@@ -8,25 +8,56 @@ from langchain_core.tools import tool
 @tool
 def linkedin_search_posts(query: str, results_max: int = 5) -> list:
     """
-    Search LinkedIn posts using browser automation.
+    Search LinkedIn posts using DuckDuckGo search.
     """
-    from llm_helper import generate_json
-    system_prompt = "You are a simulator of the LinkedIn search API."
-    user_prompt = (
-        f"Simulate a search on LinkedIn for the query: \"{query}\".\n"
-        f"Generate a JSON list of exactly 3 realistic search results. Each result must have:\n"
-        f"- \"title\": A professional LinkedIn post title or short summary (e.g. \"Why I moved my CRM to make.com\")\n"
-        f"- \"author\": A realistic professional name and title (e.g. \"Jane Doe, Founder of TechX\")\n"
-        f"- \"summary\": A short, realistic professional summary of the LinkedIn post content."
-    )
-    fallback = [
-        {
-            "title": f"LinkedIn post about {query}",
-            "author": "Example Author",
-            "summary": "A short summary of a professional LinkedIn post."
-        }
-    ]
-    return generate_json(system_prompt, user_prompt, fallback)
+    from duckduckgo_search import DDGS
+
+    search_query = f"site:linkedin.com/posts/ {query}"
+    
+    try:
+        parsed_results = []
+        with DDGS() as ddgs:
+            results = list(ddgs.text(search_query, max_results=results_max))
+            
+            for item in results:
+                title = item.get("title", "LinkedIn Post")
+                post_url = item.get("href", "")
+                snippet = item.get("body", "")
+                
+                author = "LinkedIn User"
+                if " - LinkedIn" in title:
+                    author_guess = title.split(" - LinkedIn")[0].strip()
+                    if "Post by " in author_guess:
+                        author = author_guess.replace("Post by ", "")
+                    else:
+                        author = author_guess
+                        
+                parsed_results.append({
+                    "title": title,
+                    "author": author,
+                    "summary": snippet,
+                    "url": post_url
+                })
+                
+        if not parsed_results:
+            # Fallback format if API succeeds but returns nothing
+            parsed_results = [{
+                "title": f"LinkedIn Search for {query}",
+                "author": "System",
+                "summary": f"No specific posts found for {query} on LinkedIn.",
+                "url": "https://www.linkedin.com/search/results/all/?keywords=" + query
+            }]
+            
+        return parsed_results
+        
+    except Exception as e:
+        print(f"DuckDuckGo Search error for LinkedIn: {e}")
+        return [{
+            "title": f"LinkedIn Search Error",
+            "author": "System",
+            "summary": f"Failed to search for {query}: {e}",
+            "url": "https://www.linkedin.com/"
+        }]
 
 
 @tool
